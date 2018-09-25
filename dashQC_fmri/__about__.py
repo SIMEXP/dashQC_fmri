@@ -1,4 +1,4 @@
-__author__ = 'The dashQC developers'
+__author__ = 'The dashQC_fmri developers'
 __copyright__ = 'Copyright 2018, The SIMEXP lab'
 __credits__ = ['Jonathan Armoza', 'Sebastian Urchs', 'Yassine Benhajali', 'Pierre Bellec']
 __license__ = 'MIT'
@@ -6,9 +6,9 @@ __maintainer__ = 'Sebastian Urchs'
 __email__ = 'sebastian.urchs@mail.mcgill.com'
 __status__ = 'Prototype'
 __url__ = 'https://github.com/SIMEXP/bids_qcdash'
-__packagename__ = 'dashQC'
+__packagename__ = 'dashQC_fmri'
 # TODO update description
-__description__ = ("dashQC is an interactive quality control dashboard that facilitates "
+__description__ = ("dashQC_fmri is an interactive quality control dashboard that facilitates "
                    "the manual rating of resting state fMRI focused preprocessing.")
 # TODO long description
 __longdesc__ = """\
