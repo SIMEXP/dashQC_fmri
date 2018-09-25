@@ -344,7 +344,7 @@ def make_report(prep_p, report_p, raw_p):
                       'fig_group_EPI_mask_avg': 'assets/group/images/average_mask_func_stereotaxic.png'
                       }
 
-    populate_report(repo_p, report_p)
+    populate_report(report_p)
 
     subjects = find_subjects(prep_p)
     runs = find_runs(prep_p, subjects)
