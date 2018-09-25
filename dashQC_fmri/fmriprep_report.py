@@ -68,7 +68,7 @@ def populate_report(report_p):
         'assets/summary/js',
     ]
     for branch in tree_structure:
-        branch_p = repo_p / branch
+        branch_p = report_p / branch
         branch_p.mkdir(parents=True, exist_ok=True)
 
     return
