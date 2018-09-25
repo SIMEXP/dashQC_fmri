@@ -1,6 +1,6 @@
 import sys
 from setuptools import setup
-from dashQC.__about__ import (
+from dashQC_fmri.__about__ import (
         __packagename__,
         __author__,
         __email__,
