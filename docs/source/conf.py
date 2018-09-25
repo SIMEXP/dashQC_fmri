@@ -16,11 +16,12 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+
 # -- Project information -----------------------------------------------------
 
 project = 'dashQC_fmri'
-copyright = '2018, The dashQC_fmri developers'
-author = 'The dashQC_fmri developers'
+copyright = '2018, The dashQC developers'
+author = 'The dashQC developers'
 
 # The short X.Y version
 version = '0.01'
@@ -38,8 +39,10 @@ release = 'alpha'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.autodoc',
     'sphinx.ext.coverage',
     'sphinx.ext.imgmath',
+    'sphinx.ext.githubpages',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -63,7 +66,7 @@ language = None
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path .
+# This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
@@ -129,7 +132,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'dashQC_fmri.tex', 'dashQC_fmri\\_fmri Documentation',
+    (master_doc, 'dashQC_fmri.tex', 'dashQC\\_fmri Documentation',
      'Sebastian Urchs', 'manual'),
 ]
 
@@ -154,6 +157,24 @@ texinfo_documents = [
      author, 'dashQC_fmri', 'An interactive quality control dashboard.',
      'Miscellaneous'),
 ]
+
+
+# -- Options for Epub output -------------------------------------------------
+
+# Bibliographic Dublin Core info.
+epub_title = project
+
+# The unique identifier of the text. This can be a ISBN number
+# or the project homepage.
+#
+# epub_identifier = ''
+
+# A unique identification for the text.
+#
+# epub_uid = ''
+
+# A list of files that should not be packed into the epub file.
+epub_exclude_files = ['search.html']
 
 
 # -- Extension configuration -------------------------------------------------

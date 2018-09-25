@@ -4,7 +4,6 @@
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
-SPHINXPROJ    = dashQC_fmri
 SOURCEDIR     = source
 BUILDDIR      = build
 
