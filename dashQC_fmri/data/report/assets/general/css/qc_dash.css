@@ -1,0 +1,243 @@
+/* QC Dashboard-wide styles */
+
+body {
+	
+	/* Microtexture fabric background for panel contrast */
+	background: #E2DDCA url(../images/background-microtexture.jpg) fixed !important;
+}
+
+/* Bootstrap row with equal height columns */
+.row-eq-height {
+    
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+}
+
+:focus, input:focus, select:focus {
+
+	outline-color: #209CEE !important;
+}
+
+.navbar {
+
+	box-shadow: 0 2px 4px -1px rgba(0,0,0,0.1), 
+				0 4px 5px 0 rgba(0,0,0,0.1), 
+				0 1px 10px 0 rgba(0,0,0,0.12) !important;
+}
+
+/* Dashboard title will be same color as current navbar item;
+   avoids confusion that the title is another page on the dashboard */
+.navbar-brand {
+
+	color: #23D160 !important;
+}
+
+/* Change color of navbar item on hover */
+.navbar-brand:hover, .navbar_item:hover a {
+    
+    color: #FFA4C4 !important;
+    transition-delay: 0.1s;
+}
+
+/* Current navbar item has distinguishing color from other non-selected navbar items*/
+.navbar-brand-current, .navbar-brand-current a { 
+	
+	color: #FFDD57 !important;
+}
+
+/* Buttons for the QC dashboard navbar */
+.qcdash-navbar-button {
+	
+	background-color: #FFDD57;
+	margin: 0.5em 0.75em 0.5em 0.5em;
+}
+.qcdash-navbar-button:hover {
+	
+	background-color: #E6C43E;
+	transition-delay: 0.1s;
+}
+
+ul.nav-pills a { 
+
+	box-shadow: 0 2px 4px -1px rgba(0,0,0,0.1), 
+				0 4px 5px 0 rgba(0,0,0,0.1), 
+				0 1px 10px 0 rgba(0,0,0,0.12) !important;
+}
+
+/* Overrides bootstrap navbar anchor styling for json export download button */
+#qcdash-export-link {
+
+	color: #333;
+	padding: 0;
+}
+
+/* Keen IO overrides */
+.chart-wrapper { 
+
+	/*height: 100%;*/
+	box-shadow: 0 2px 4px -1px rgba(0,0,0,0.1), 
+				0 4px 5px 0 rgba(0,0,0,0.1), 
+				0 1px 10px 0 rgba(0,0,0,0.12) !important;
+}
+.chart-wrapper, .qcdash-buttonarea {
+
+	margin-top: 1em;
+}
+.chart-title {
+
+	background-color: lightgrey;
+	color: white;
+}
+
+/* Bootstrap overrides */
+.container-fluid, .row{
+ 	
+ 	height: 100%;
+}
+
+/* For equal column height in rows */
+/*.equal {
+  	
+  	display: flex;
+  	display: -webkit-flex;
+  	flex-wrap: wrap;
+}
+*/
+
+/* Summary-specific styles */
+
+.nav-pills li {
+	
+	padding: 1em 1em 1em 0.5em;
+}
+.nav-pills li a:hover {
+
+	color: #FFA4C4;
+	background-color: rgb(61,74,86);
+}
+.nav-pills li a {
+	
+	color: white;
+	background-color: rgb(61,74,86);
+}
+.nav-pills li.active a {
+	
+	background-color: rgb(61,74,86) !important;
+	color: #FFDD57 !important;
+}
+.nav-pills li.active a:hover {
+
+	color: #FFA4C4 !important;
+	background-color: rgb(61,74,86);
+}
+
+
+/* Registration-specific styles */
+
+textarea {
+
+	border-radius: 0 !important;
+	border: none !important;
+	resize: none;
+}
+/* Textarea focus color */
+textarea:focus {
+    
+    /*outline: none !important;*/
+    outline-color: #209CEE !important;
+    box-shadow: 0 0 10px #209CEE !important;
+}	
+
+.form-group {
+
+	margin-bottom: 0;
+}
+
+
+/* Overrides bootstrap table row hover color */
+table {
+
+	background-color: #FFFFFF;
+}
+
+.table tbody tr:hover td, .table tbody tr:hover th {
+	
+	cursor: pointer;
+    background-color: #ccc;
+}
+
+/* DataTables div */
+.dataTables_wrapper {
+
+	padding: 1em 1em 0em 1em !important;
+}
+
+/* Ensures cursor remains pointer over whole table */
+tbody {
+	
+	cursor: pointer;
+}
+
+/*Data table style overrides */
+li.paginate_button a {
+
+	background-color: white;
+	color: #209CEE;
+}
+
+li.paginate_button.active a {
+	
+	background-color: #209CEE;
+	color: white !important;
+}
+
+
+/* File Choice input styling 
+   Solution from: https://tympanus.net/codrops/2015/09/15/styling-customizing-file-inputs-smart-way/ */
+
+/* - width and height set to 0.1px instead of 0px, 
+     This prevents throwing the element out of tab party in some browsers. 
+   - position: absolute guarantees the element does not interfere with the sibling elements. */
+.inputfile {
+	
+	width: 0.1px;
+	height: 0.1px;
+	opacity: 0;
+	overflow: hidden;
+	position: absolute;
+	z-index: -1;
+}
+
+/* File Choice label style */
+.inputfile + label {
+    
+    background-color: #FFDD57;
+    border-radius: 0.25em;
+	cursor: pointer;
+    display: inline-block;
+    font-family: 'Gotham Rounded SSm A', 'Gotham Rounded SSm B', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    overflow: hidden;
+    margin: 0.5em 0.75em 0.5em 0.5em;
+    padding: 0.5em 1em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inputfile:focus + label,
+.inputfile.has-focus + label {
+ 
+    outline: 1px dotted #000;
+    outline: -webkit-focus-ring-color auto 5px;
+}
+
+.inputfile:focus + label,
+.inputfile.has-focus + label,
+.inputfile + label:hover {
+    
+    background-color: #E6C43E;
+}
+

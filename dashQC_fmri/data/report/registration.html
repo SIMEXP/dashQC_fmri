@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Report on the quality of MRI registration</title>
+  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <!-- Stylesheets -->
+
+    <style>
+
+        .sliderNext {
+          
+            position: absolute;
+            top: 40%;
+            right: 2.5%;
+            object-fit: none;
+            object-position: 0 -150px;
+            width: 50px;
+            height: 150px;
+        }
+
+        .sliderNext:hover {
+
+            object-position: -50px -150px;
+        }
+
+        .sliderPrev {
+
+            position: absolute;
+            top: 40%;
+            left: 2.5%;
+            object-fit: none;
+            object-position: 0 0;
+            width: 50px;
+            height: 150px;
+        }
+
+        .sliderPrev:hover {
+    
+            object-position: -50px 0;
+        }
+
+        @keyframes flickerAnimation {
+    
+            from { opacity: 1; }
+            to { opacity: 0;}
+        }
+
+        .register {
+         
+            display: inline-block;
+        }
+        .register img:hover {
+    
+            /*animation: flickerAnimation 1s infinite alternate ease-in-out;*/
+            animation-name: flickerAnimation;
+            animation-duration: 1s;
+            animation-iteration-count: 1;
+            animation-direction: normal;
+            animation-timing-function: ease-in-out;
+            animation-fill-mode: both;
+        }
+
+        .button_hotkey_letter {
+
+            text-decoration: underline;
+        }
+
+        .cs-reg-img {
+
+            text-align: center;
+        }
+
+        #registration-pass, #registration-maybe, #registration-fail, #registration-unmark {
+
+            box-shadow: 0 2px 4px -1px rgba(0,0,0,0.1), 
+                        0 4px 5px 0 rgba(0,0,0,0.1), 
+                        0 1px 10px 0 rgba(0,0,0,0.12) !important;
+        }
+
+        #registration-unmark {
+            
+            background-color: #A1A1A1;
+            border-color: #A1A1A1;
+            color: #FFFFFF;
+        }
+
+        #registration-unmark:hover {
+
+            background-color: #808080;
+            border-color: #808080;
+        }       
+
+    </style>
+
+    <!-- General styles for the dashboard -->
+    <link rel="stylesheet" type="text/css" href="assets/general/css/qc_dash.css" />
+
+    <!-- Keen.io -->
+    <link rel="stylesheet" type="text/css" href="lib/bootstrap/bootstrap.min.css" /> 
+    <link rel="stylesheet" type="text/css" href="lib/keen/keen-dashboards.css" />
+
+    <!-- Select2 -->
+    <link href="lib/select2/select2.min.css" rel="stylesheet" />
+
+</head>
+
+<body class="application">
+
+    <!-- Navbar -->
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    
+        <div class="container-fluid">
+      
+            <div class="navbar-header">
+                
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+        
+                </button>
+        
+                <a class="navbar-brand" href="http://niak.simexp-lab.org/pipe_preprocessing.html">
+                    fMRI preprocessing pipeline
+                </a>
+      
+            </div>
+
+            <div class="navbar-collapse collapse">
+                
+                <ul class="nav navbar-nav navbar-left">
+
+                    <li class="navbar_item"><a href="index.html">Summary</a></li>
+                    <li class="navbar_item navbar-brand-current"><a href="registration_new.html">Registration</a></li>
+                    <li class="navbar_item"><a href="motion.html">Motion</a></li>                 
+
+                </ul>
+
+                <ul class="nav navbar-nav navbar-right">
+
+                    <!-- <li><button type="button" class="btn btn-light dashQC_fmri-navbar-button" id="dashQC_fmri-import-button">Import data</button></li> -->
+                    <li>
+                        <input type="file" name="file" id="file" class="inputfile" />
+                        <label for="file">
+                            <span>Load QC</span>
+                        </label>
+                    </li>
+                    <li>
+                        <a href="" id="qcdash-export-link">
+                            <button type="button" class="btn btn-light qcdash-navbar-button" id="qcdash-export-button" style="margin-right: 1em !important;">Save QC</button>
+                        </a>
+                    </li>
+
+                </ul>
+            
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Contents -->
+    <div class="container-fluid" >
+
+        <!-- Registration images -->
+        <div class="row">
+        
+            <!-- Individual vs template T1 scan for subject -->
+            <div class="col-sm-6">
+            
+                <div class="chart-wrapper">
+                
+                    <div class="chart-title" id="t1-chart-title">
+                        Individual vs template T1 scan for subject
+                        <!-- <select class=#subject-select" style="width: 50%"></select> -->
+                    </div>
+
+                    <div class="chart-stage cs-reg-img">
+                        
+                        <div id="T1-indVsTemplate" class="register">
+                            <img class="T1 montage">
+                        </div>
+            
+                        <img class="sliderNext" src="lib/jsImageSlider/navbuttons.png" >
+                        <img class="sliderPrev" src="lib/jsImageSlider/navbuttons.png" >
+          
+                    </div>
+          
+                    <div class="chart-notes">Click or press left/right arrows for prev/next subject. Hover over image for template scan. Move mouse away to revert to original image.</div>
+
+                </div>
+
+            </div>
+
+            <!-- BOLD vs T1 scan for subject -->
+            <div class="col-sm-6">
+    	   
+                <div class="chart-wrapper">
+      	         
+                    <div class="chart-title" id="bold-chart-title">
+                        BOLD vs T1 scan for subject
+                        <!-- <select id=#subject-select" class=#subject-select" style="width: 50%"></select> -->
+                    </div>
+                    
+                    <div class="chart-stage cs-reg-img">
+                        
+                        <div id="boldVsT1" class="register">
+                            <img class="BOLD montage">
+                        </div>
+                        
+                        <img class="sliderNext" src="lib/jsImageSlider/navbuttons.png" >
+                        <img class="sliderPrev" src="lib/jsImageSlider/navbuttons.png" >
+                    </div>
+
+                    <div class="chart-notes">
+                        Click or press left/right arrows for prev/next subject. Hover over image for individual T1 scan. Move mouse away to revert to original image.
+                    </div>
+                
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Comment form and registration qc buttons -->
+        <div class="row">
+
+            <div class="col-sm-3"></div>
+
+            <div class="col-sm-6">
+
+                <div class="chart-wrapper">
+
+                    <div class="chart-title">
+                        <span>Current subject&nbsp;&nbsp;</span>
+                        <select id="subject-select" style="width: 50%"></select>
+                        <div style="float: right; padding-top: 0.25em;">
+                            <span>Status:&nbsp;</span>
+                            <span id="subject-status-span" style="font-weight: normal;"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Saving form data: 
+                        https://stackoverflow.com/questions/13685263/can-i-save-input-from-form-to-txt-in-html-using-javascript-jquery-and-then-us -->
+                    <!-- NOTE: Solutions to consider
+
+                        (1) https://stackoverflow.com/questions/21012580/is-it-possible-to-write-data-to-file-using-only-javascript
+
+                        (2) https://codeburst.io/using-html5-web-storage-a450294484bb
+
+                        (3) https://scotch.io/tutorials/use-the-html5-file-api-to-work-with-files-locally-in-the-browser
+                    -->
+                    <div class="form-group">
+
+                        <!-- <a id="mylink" download="./assets/general/mystuff.txt">Download link</a> -->
+
+                        <!-- <label for="mytestinput">Comment:</label> -->
+
+                        <textarea class="form-control" rows="7" id="registration-comment-textarea"></textarea>
+
+                    </div>
+
+                    <div class="chart-notes">
+
+                        <!-- <button type="submit" class="btn btn-success" id="formsavebutton">Success</button>
+                        <input id="the-file-input" type="file"> -->
+                    </div>                    
+
+                </div>
+
+            </div>            
+
+            <div class="col-sm-2">
+
+                <div class="qcdash-buttonarea">
+
+                    <div class="row">
+
+                        <div class="col-sm-1"></div>
+                        
+                        <div class="col-sm-4">
+                            
+                            <div class="row" style="margin-bottom: 1em;">
+                                <button type="button" class="btn btn-success btn-md" id="registration-pass" style="margin-right: 1em;  min-width: 8em;"><span class="button_hotkey_letter">P</span>ass</button>
+                                <!-- color: #FFF; background-color: #23D160; border-color: #23D160; -->
+                            </div>
+                            <div class="row" style="margin-bottom: 1em;">
+                                <button type="button" class="btn btn-warning btn-md" id="registration-maybe" style="margin-right: 1em; min-width: 8em;"><span class="button_hotkey_letter">M</span>aybe</button>
+                                <!-- color: #FFF; background-color: #FFDD57; border-color: #FFDD57; -->
+                            </div>
+                            <div class="row" style="margin-bottom: 1em;">
+                                <button type="button" class="btn btn-danger btn-md" id="registration-fail" style="margin-right: 1em; min-width: 8em;"><span class="button_hotkey_letter">F</span>ail</button>
+                                <!-- color: #FFF; background-color: #FF3860; border-color: #FF3860; -->
+                            </div>
+                            <div class="row" style="margin-bottom: 1em;">
+                                <button type="button" class="btn btn-md" id="registration-unmark" style="margin-right: 1em; min-width: 8em;"><span class="button_hotkey_letter">U</span>nmark</button>
+                                <!-- color: #FFF; background-color: #D7D7D7; border-color: #D7D7D7; -->
+                            </div>                            
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-sm-7"></div>
+
+                <!-- <div style="float: right; position: relative; transform:  -ms-transform: translate(0%, 150%); transform: translate(0%, 150%);"></div> -->
+            
+            </div>
+
+        </div>      
+
+    </div>
+
+    <hr>
+
+    <!-- Footer -->
+    <footer class="footer">
+    
+        <div class="container-fluid">
+
+            <div class="row">
+
+                <div class="col-sm-12">
+
+                    <p class="small text-muted">Built with &#9829; by <a href="http://simexp-lab.org">SIMEXP Lab.</a></p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </footer>
+
+    <!-- Dependencies -->
+
+    <!-- For D3 -->
+    <script type="text/javascript" src="lib/d3js/d3.min.js" charset="utf-8"></script>    
+
+    <!-- jQuery -->
+    <script type="text/javascript" src="lib/jquery/jquery.min.js"></script>
+
+    <!-- Twitter Bootstrap -->    
+    <script type="text/javascript" src="lib/bootstrap/bootstrap.min.js"></script>
+
+    <!-- Keen.io -->
+    <script type="text/javascript" src="lib/keen/keen.min.js"></script>
+    <script type="text/javascript" src="lib/keen/meta.js"></script>
+
+    <!-- Select 2 -->
+    <script src="lib/select2/select2.min.js"></script>
+
+    <!-- Custom external scripts -->
+
+    <!-- Description of input files and options -->
+    <script type="text/javascript" src="assets/summary/js/filesIn.js"></script>    
+
+    <!-- List of subjects -->
+    <script src="assets/group/js/listSubject.js"></script> 
+
+    <!-- QC Dashboard Objects -->
+    <script type="text/javascript" src="assets/general/js/qc_dash_objects.js"></script>
+
+    <!-- Live reload - for development use only -->
+    <!-- <script>document.write('<script src="http://' + (location.host || '${1:localhost}').split(':')[0] + ':${2:35729}/livereload.js?snipver=1"></' + 'script>')</script> -->  
+  
+    <!-- Main script -->
+    <script>
+
+        // === Dynamic bootstrap loading test (pre-document.ready) === //
+
+        // let bodyTag = document.getElementsByTagName("body")[0];
+
+        // let bootstrapRow = document.createElement("div");
+        // bootstrapRow.className = "row";
+
+        // let bootstrapCol1 = document.createElement("div");
+        // bootstrapCol1.className = "col-sm-5";
+        // bootstrapCol1.style.border = "thick solid #0000FF";
+
+        // let p1 = document.createElement("p");
+        // p1.innerHTML = "My first column";
+        // bootstrapCol1.appendChild(p1);
+
+        // let bootstrapCol2 = document.createElement("div");
+        // bootstrapCol2.className = "col-sm-7";
+        // bootstrapCol2.style.border = "thick solid #FF00FF";
+
+        // let p2 = document.createElement("p");
+        // p2.innerHTML = "My second column";
+        // bootstrapCol2.appendChild(p2);
+
+        // bodyTag.appendChild(bootstrapRow);
+
+        // bootstrapRow.appendChild(bootstrapCol1);
+        // bootstrapRow.appendChild(bootstrapCol2);
+
+        // Registration string status enum
+        const registrationStatus = {
+
+            UNMARKED: "Unmarked",
+            PASS: "Pass",
+            MAYBE: "Maybe",
+            FAIL: "Fail"
+        };
+
+        // Registration keypress enum
+        const registrationHotKeys = {
+
+            // Image navigation
+            LEFT_ARROW: 37,
+            RIGHT_ARROW: 39,
+
+            // Statuses
+            UNMARKED_UPPERCASE: 85,
+            UNMARKED_LOWERCASE: 117,
+            PASS_UPPERCASE: 80,
+            PASS_LOWERCASE: 112,
+            MAYBE_UPPERCASE: 77,
+            MAYBE_LOWERCASE: 109,
+            FAIL_UPPERCASE: 70,
+            FAIL_LOWERCASE: 102
+        };
+
+        var webStorageElement = null;
+
+        // Perform when all have loaded
+        $(document).ready(function() {
+
+            // === Functions === //
+
+            // Gets current subject name from select2 dropdown
+            function currentSubject() {
+
+                return $("#subject-select option[value=\"" + $("#subject-select").val() + "\"]").text();
+            }
+
+            // Find subject ID number in provided data given a subject name
+            function findSubjectIDFromName(p_data, p_subject) {
+                
+                let foundID = null;
+                for ( let index = 0; index < p_data.length; index++ ) {
+
+                    if ( p_data[index].text === p_subject ) {
+                    
+                        foundID = p_data[index].id;
+                        break;
+                    }      
+                }
+
+                return foundID; 
+            }
+
+            // Function to parse the page parameters  
+            function getParameterByName(p_name, p_url) {
+                
+                if ( !p_url ) {
+                 
+                    p_url = window.location.href;
+                }
+
+                p_name = p_name.replace(/[\[\]]/g, "\\$&");
+                var regex = new RegExp("[?&]" + p_name + "(=([^&#]*)|&|#|$)"),
+                    results = regex.exec(p_url);
+
+                if ( !results ) {
+
+                    return null;
+                }
+
+                if ( !results[2] ) {
+                 
+                    return '';
+                }
+
+                return decodeURIComponent(results[2].replace(/\+/g, " "));
+            }
+
+            // Moves on to the next subject
+            function nextSubject() {
+
+                $es = $("#subject-select");
+                currId = $es.val();
+                currId = parseInt(currId);
+
+                if ( currId < listSubject.length ) {
+              
+                    currId+=1;
+                } else {
+                    
+                    currId = 1;
+                }
+
+                var evt = {
+                    
+                    params: {
+
+                        data: {
+
+                            id: currId.toString()
+                        }
+                    }
+                };
+                switchSubjects(evt);
+            }
+        
+            // Moves back to the previous subject
+            function previousSubject() {
+
+                $es = $("#subject-select");
+                currId = $es.val();
+                currId = parseInt(currId);
+
+                if ( currId > 1 ) {
+                   
+                   currId -= 1;
+                } else {
+                
+                   currId = listSubject.length;
+                }
+
+                var evt = {
+
+                    params: {
+
+                        data: {
+
+                            id: currId.toString()
+                        }
+                    }
+                };
+                switchSubjects(evt);
+            }
+
+            // Changes subjects with left and right arrows (previous and next, respectively)  
+            function registrationKeyDown(p_key) {
+
+                // Hotkeys only work if textarea does not currently have focus
+                if ( $("#registration-comment-textarea").is(":focus") ) {
+
+                    return;
+                }
+
+                // Perform appropriate behavior for keypress
+                switch ( p_key ) {
+
+                    // Arrow keys (left, right)
+                    case registrationHotKeys.LEFT_ARROW:
+                        previousSubject();
+                        break;
+                    case registrationHotKeys.RIGHT_ARROW:
+                        nextSubject();
+                        break;
+
+                    // Status hot keys (Uu unmarked, Pp pass, Mm maybe, Ff fail)
+                    case registrationHotKeys.UNMARKED_UPPERCASE:
+                    case registrationHotKeys.UNMARKED_LOWERCASE:
+                        setSubjectStatus(currentSubject(), registrationHotKeys.UNMARKED_UPPERCASE);
+                        break;
+
+                    case registrationHotKeys.PASS_UPPERCASE:
+                    case registrationHotKeys.PASS_LOWERCASE:
+                        setSubjectStatus(currentSubject(), registrationHotKeys.PASS_UPPERCASE);
+                        break;
+
+                    case registrationHotKeys.MAYBE_UPPERCASE:
+                    case registrationHotKeys.MAYBE_LOWERCASE:
+                        setSubjectStatus(currentSubject(), registrationHotKeys.MAYBE_UPPERCASE);
+                        break;
+
+                    case registrationHotKeys.FAIL_UPPERCASE:
+                    case registrationHotKeys.FAIL_LOWERCASE:
+                        setSubjectStatus(currentSubject(), registrationHotKeys.FAIL_UPPERCASE);
+                        break
+                }
+            }
+
+            // Updates images
+            function setImage (p_event) {
+      
+                // Get subject index and ID
+                var id = p_event.params.data.id;
+                subject = $("#subject-select option[value=" + id + "]").text();
+        
+                // Update the selection of the subject button
+                $es = $("#subject-select");
+                $es.val(id);
+                $es.trigger("change");
+        
+                // Grab the T1 and BOLD div, and build new empty figures
+                var figBOLD = $(".BOLD");
+                var newFigBOLD = document.createElement("img");
+                var figT1 = $(".T1");
+                var newFigT1 = document.createElement("img");
+        
+                // Populate figures    
+                newFigBOLD.src = "assets/registration/images/" + subject + "_func.png";
+                newFigBOLD.setAttribute("width", "70%");
+                newFigBOLD.style.position = "relative";
+                newFigBOLD.style.left = "0px";
+                newFigBOLD.className = "BOLD";
+                newFigT1.src = "assets/registration/images/" + subject + "_anat.png";
+                newFigT1.setAttribute("width", "70%");
+                newFigT1.style.position = "relative";
+                newFigT1.style.left = "0px";
+                newFigT1.className = "T1";
+
+                // Update figures        
+                figBOLD.replaceWith(newFigBOLD);
+                figT1.replaceWith(newFigT1);
+                figBoldVsT1 = $("#boldVsT1");
+                figBoldVsT1.css("backgroundImage","url('assets/registration/images/" + subject + "_anat.png')");
+                figBoldVsT1.css("display", "inline-block");
+                figBoldVsT1.css("backgroundSize","70%");
+                figBoldVsT1.css("backgroundRepeat","no-repeat");
+                figBoldVsT1.css("backgroundPosition","50% 0%");
+                figT1vsTemplate = $("#T1-indVsTemplate");
+                figT1vsTemplate.css("backgroundImage","url('assets/group/images/template_stereotaxic.png')");
+                figT1vsTemplate.css("display", "inline-block");
+                figT1vsTemplate.css("backgroundSize","70%");
+                figT1vsTemplate.css("backgroundRepeat","no-repeat");
+                figT1vsTemplate.css("backgroundPosition","50% 0%");
+            }            
+
+            // Translates a status hot key to text, displays the status onscreen, and stores it
+            function setSubjectStatus(p_subject, p_key) {
+
+                let translatedStatus = registrationStatus.UNMARKED;
+
+                // Translate keypress code to registration status string
+                switch ( p_key ) {
+
+                    case registrationHotKeys.UNMARKED_UPPERCASE:
+                    case registrationHotKeys.UNMARKED_LOWERCASE:
+                        translatedStatus = registrationStatus.UNMARKED;
+                        break;
+
+                    case registrationHotKeys.PASS_UPPERCASE:
+                    case registrationHotKeys.PASS_LOWERCASE:
+                        translatedStatus = registrationStatus.PASS;
+                        break;
+
+                    case registrationHotKeys.MAYBE_UPPERCASE:
+                    case registrationHotKeys.MAYBE_LOWERCASE:
+                        translatedStatus = registrationStatus.MAYBE;
+                        break;
+
+                    case registrationHotKeys.FAIL_UPPERCASE:
+                    case registrationHotKeys.FAIL_LOWERCASE:
+                        translatedStatus = registrationStatus.FAIL;
+                        break;                                                
+                }
+
+                // Display the status text on the subject data widget
+                $("#subject-status-span").text(translatedStatus);
+
+                // Set the new registration status for this subject image in web storage
+                webStorageElement.setSubjectStatus(p_subject, translatedStatus);                
+            }
+
+            function setUIToCurrentSubject(p_webStorageObject, p_subjectList, p_uiList) {
+
+                let subjectName = p_webStorageObject.currentSubject;
+
+                // Get current subject ID in data list from name
+                let foundID = null;
+                for ( let index = 0; index < p_subjectList.length; index++ ) {
+
+                    if ( p_subjectList[index].text === subjectName ) {
+                    
+                        foundID = p_subjectList[index].id;
+                        break;
+                    }      
+                }
+                if ( null == foundID ) {
+
+                    // Error
+                    return;
+                }
+
+                // Fill in DOM objects
+                $("#" + p_uiList.select).select({ params: { data: { id: foundID } } });
+                $("#" + p_uiList.comments).val(p_webStorageObject.subjects[subjectName].comments);
+                $("#" + p_uiList.status).text(p_webStorageObject.subjects[subjectName].status);        
+            }
+
+
+            // Translates key press to subject status text
+            function statusKeyToText(p_key) {
+
+                let text = "Unmarked";
+                if ( "" != p_key ) {
+
+                    switch ( p_key ) {
+
+                    case 80:
+                    case 112:
+                        text = "Pass";
+                        break;
+                    case 77:
+                    case 109:
+                        text = "Maybe";
+                        break;
+                    case 70:
+                    case 102:
+                        text = "Fail";
+                        break;                                                
+                    }
+                }
+
+                return text;
+            }            
+
+            // Code to execute when switching between subjects for registration
+            function switchSubjects(p_event) {
+
+                let newSubject = $("#subject-select option[value=" + 
+                                   p_event.params.data.id + "]").text();
+
+                let status = "";
+
+                // Set up a new subject for session storage input (status/comments)
+                if ( webStorageElement ) {
+                    
+                    webStorageElement.setSubject(newSubject, p_event.params.data.id);
+                    status = webStorageElement.getSubjectStatus(newSubject);
+
+                    // Change text area to any previous comments for new subject
+                    webStorageElement.restoreCommentsToTextArea();                    
+                }
+
+                // Get the QC status of this subject
+                if ( "" == status ) {
+                    status = "Unmarked";
+                }
+                
+                // Change images
+                setImage(p_event);
+
+                // Change chart titles
+                $("#t1-chart-title").text("Individual vs template T1 scan for " + newSubject);
+                $("#bold-chart-title").text("BOLD vs T1 scan for " + newSubject);
+                $("#subject-status-span").text(status);
+            }
+
+            // === Main script === //
+
+            // Get initial scan file info for first subject
+            var event = { params: { data: { id: "1" } } }; 
+            var filesIn = buildFilesIn(event);            
+      
+            // Add a subject select dropdown
+            $("#subject-select").select2({ data: listSubject });
+            $("#subject-select").on("select2:select", function (p_event) { 
+
+                // Get new file information for this subject
+                filesIn = buildFilesIn(p_event);
+
+                // Perform actions necessary to switch subjects (loading new data, new images)
+                switchSubjects(p_event);
+            });
+
+            // Create new web storage object for subject data
+            webStorageElement = new QCDash_WebStorage_SubjectData(
+                                            Object.keys(filesIn.fmri.sessInitialMRI)[0],
+                                            "Your comments here...",
+                                            "registration-comment-textarea",
+                                            $("#subject-select option[value=\"1\"]").text(),
+                                            switchSubjects);  
+
+            // Determine first subject to load on to registration page
+
+            // Read page parameters for subject name
+            var subjectToLoad = { name: getParameterByName("id"), id: "1" };
+            if ( subjectToLoad.name ) {
+
+                // Check to make sure this subject is in the subject list outputted from the pipeline
+                subjectToLoad.id = findSubjectIDFromName(listSubject, subjectToLoad.name);
+                if ( !subjectToLoad.id ) {
+                    
+                    subjectToLoad.id = "1";
+                }
+            // Check in web storage for a last subject from a previous registration session    
+            } else if ( webStorageElement.hasLastSubjectRecord() ) {
+
+                // Set internal storage to web storage's last subject
+                webStorageElement.setToLastSubject();
+
+                // Set select box to last subject
+                subjectToLoad.id = webStorageElement.lastSubjectID;
+            }
+
+            // Save ID to event data structure
+            event.params.data.id = subjectToLoad.id;
+
+            // // Read page parameters and update accordingly    
+            // var subjectName = getParameterByName("id");
+            // if ( !subjectName ) {
+                
+            //     // Default to first subject in the data list
+            //     subjectName = listSubject[0]["text"];
+
+            //     // Check in web storage for a last subject from a previous registration session
+            //     if ( webStorageElement.hasLastSubjectRecord() ) {
+
+            //         // Set internal storage to web storage's last subject
+            //         webStorageElement.setToLastSubject();
+
+            //         // Set select box to last subject
+            //         event.params.data.id = webStorageElement.lastSubjectID;
+
+            //         // Get the file information for the last subject
+            //         filesIn = buildFilesIn(event);
+            //     }
+            // }
+            // // Else retrieve subject from page parameters
+            
+            // // Check to make sure this subject is in the subject list outputted from the pipeline
+            // id = findSubjectIDFromName(listSubject, subjectName);
+            // if ( !id ) {
+                
+            //     id = "1";
+            //     event.params.data.id = id;
+            //     filesIn = buildFilesIn(event);
+            // }
+
+            // Get the file information for the selected subject
+            filesIn = buildFilesIn(event);            
+
+            // Switch to whatever subject  
+            switchSubjects(event);
+
+
+            // === UI interaction behavior === //
+
+            // Previous/next registration image buttons
+            document.getElementsByClassName("sliderNext")[0].onclick = nextSubject;
+            document.getElementsByClassName("sliderNext")[1].onclick = nextSubject;
+            document.getElementsByClassName("sliderPrev")[0].onclick = previousSubject;
+            document.getElementsByClassName("sliderPrev")[1].onclick = previousSubject;
+
+            // Subject status hotkeys and button clicks
+            window.onkeydown = function(e) { registrationKeyDown(e.keyCode); };
+            $("#registration-pass").click(function(){
+                setSubjectStatus(currentSubject(), registrationHotKeys.PASS_UPPERCASE);
+            });
+            $("#registration-maybe").click(function(){
+                setSubjectStatus(currentSubject(), registrationHotKeys.MAYBE_UPPERCASE);
+            });
+            $("#registration-fail").click(function(){
+                setSubjectStatus(currentSubject(), registrationHotKeys.FAIL_UPPERCASE);
+            });
+            $("#registration-unmark").click(function(){
+                setSubjectStatus(currentSubject(), registrationHotKeys.UNMARKED_UPPERCASE);
+            }); 
+
+            document.getElementById("inputfile-import");
+
+            // Import dashboard button
+            $("#file").change(function() {
+
+                QCDash_WebStorage_SubjectData.importFile(webStorageElement,
+                                                         document.getElementById("file").files[0],
+                                                         listSubject,
+                                                         { 
+                                                             select: "subject-select", 
+                                                             comments: "registration-comment-textarea",
+                                                             status: "subject-status-span"
+                                                         },
+                                                         setUIToCurrentSubject);
+            });
+
+            // Export button
+            $("#qcdash-export-button").click(function() {
+                
+                let fileURL = QCDash_WebStorage_SubjectData.exportFile(webStorageElement.exportFilePrefix, 
+                                webStorageElement.storageID);
+                $("#qcdash-export-link").attr("href", fileURL);
+                $("#qcdash-export-link").attr("download", webStorageElement.exportFilename);
+            });            
+
+            
+        });
+  
+    </script>
+
+</body>
+
+</html>
