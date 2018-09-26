@@ -1,6 +1,8 @@
 __author__ = 'The dashQC_fmri developers'
 __copyright__ = 'Copyright 2018, The SIMEXP lab'
-__credits__ = ['Jonathan Armoza', 'Sebastian Urchs', 'Yassine Benhajali', 'Pierre Bellec']
+__credits__ = [
+    'Jonathan Armoza', 'Pierre Bellec', 'Yassine Benhajali',  'Sebastian Urchs'
+]
 __license__ = 'MIT'
 __maintainer__ = 'Sebastian Urchs'
 __email__ = 'sebastian.urchs@mail.mcgill.com'
