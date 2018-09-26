@@ -4,7 +4,7 @@
 <head>
 
     <title>Report on fMRI Registration</title>
-    
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
     <!-- Styles for this page -->
@@ -12,13 +12,13 @@
 
         /* Images tab styles */
         .montage {
-        
+
             position: relative;
             left: 0;
         }
 
         /*@keyframes flickerAnimation {
-        
+
             from { opacity: 1; }
             to { opacity: 0; }
         }
@@ -28,22 +28,22 @@
             display: inline-block;
         }
         .register img{
-            
+
             animation: flickerAnimation 1s infinite alternate ease-in-out;
         }*/
 
         @keyframes flickerAnimation {
-    
+
             from { opacity: 1; }
             to { opacity: 0;}
         }
 
         .register {
-         
+
             display: inline-block;
         }
         .register img:hover {
-    
+
             /*animation: flickerAnimation 1s infinite alternate ease-in-out;*/
             animation-name: flickerAnimation;
             animation-duration: 1s;
@@ -51,7 +51,7 @@
             animation-direction: normal;
             animation-timing-function: ease-in-out;
             animation-fill-mode: both;
-        }        
+        }
 
         .group-image {
 
@@ -62,12 +62,12 @@
 
         /* Search box */
         .input-sm {
-            
+
             font-weight: lighter;
             font-size: 1em !important;
         }
 
-        /* Pagination */     
+        /* Pagination */
         li.paginate_button {
 
             display: inline !important;
@@ -79,17 +79,17 @@
             background: none !important;
         }
         li.paginate_button a {
-            
+
             color: #3D4A56 !important;
         }
         li.paginate_button.active a {
-            
+
             background-color: #3D4A56 !important;
             border-color: #3D4A56 !important;
             color: white !important;
         }
         table {
-            
+
             display: inline-table !important;
             /*width: 100%;*/
         }
@@ -100,13 +100,13 @@
         }
         tr.odd.selected {
             background-color: #FFDD57 !important;
-        }        
+        }
         tr.even.selected > .sorting_1 {
             background-color: #FFDD57 !important;
         }
         tr.odd.selected > .sorting_1 {
             background-color: #FFDD57 !important;
-        }    
+        }
 
         /* Column select highlight color */
         tr.even > .sorting_1:not(.st-row-nohighlight) {
@@ -114,10 +114,10 @@
         }
         tr.odd > .sorting_1:not(.st-row-nohighlight) {
             background-color: #FFDD57 !important;
-        }  
+        }
         .sorting_asc:not(.st-column-nohighlight) {
             background-color: #FFDD57 !important;
-        }   
+        }
         .sorting_desc:not(.st-column-nohighlight) {
             background-color: #FFDD57 !important;
         }
@@ -148,12 +148,12 @@
         .provenance-column-left {
 
             margin-left: 1.5em;
-            margin-right: 0.5em;            
+            margin-right: 0.5em;
         }
         .provenance-column-right {
-            
+
             margin-left: 0.5em;
-            margin-right: 1.5em;           
+            margin-right: 1.5em;
         }
 
     </style>
@@ -167,11 +167,11 @@
     <!-- Keen.io -->
     <link rel="stylesheet" type="text/css" href="lib/keen/keen-dashboards.css" />
 
-    <!-- pretty-json -->    
+    <!-- pretty-json -->
     <link rel="stylesheet" type="text/css" href="lib/pretty-json/pretty-json.css" />
 
     <!-- select2 -->
-    <link rel="stylesheet" type="text/css" href="lib/select2/select2.min.css"  /> 
+    <link rel="stylesheet" type="text/css" href="lib/select2/select2.min.css"  />
 
     <!-- c3.js -->
     <link rel="stylesheet" type="text/css" href="lib/c3js/c3.min.css" />
@@ -179,7 +179,7 @@
     <!-- DataTables -->
     <link rel="stylesheet" type="text/css" href="lib/datatables/styles/jquery.dataTables.min.css"/>
 
-    <!-- Desired table features: 
+    <!-- Desired table features:
 
         - Column sorting
         - Checkability for rows
@@ -189,7 +189,7 @@
     -->
 
     <!-- General styles for the dashboard -->
-    <link rel="stylesheet" type="text/css" href="assets/general/css/qc_dash.css" />        
+    <link rel="stylesheet" type="text/css" href="assets/general/css/qc_dash.css" />
 
 </head>
 
@@ -206,7 +206,7 @@
 
                 <!-- Creates a dropdown menu from an icon when the browser window
                      is too small to show the full navbar -->
-                <button type="button" class="navbar-toggle" data-toggle="collapse" 
+                <button type="button" class="navbar-toggle" data-toggle="collapse"
                         data-target=".navbar-collapse">
                     <span class="sr-only">Toggle navigation</span>
                     <span class="icon-bar"></span>
@@ -215,10 +215,10 @@
                 </button>
 
                 <!-- NIAK Brand -->
-                <a class="navbar-brand" href="http://niak.simexp-lab.org/pipe_preprocessing.html">
-                    fMRI preprocessing pipeline
+                <a class="navbar-brand" href="https://dashqc-fmri.readthedocs.io/en/latest/index.html">
+                    dashQC_fmri
                 </a>
-              
+
             </div>
 
             <!-- Navbar body -->
@@ -250,15 +250,15 @@
             </li>
             <li>
                 <a data-toggle="pill" id="pill-motion-stats" href="#summary-motion-stats">Motion Stats</a>
-            </li>            
+            </li>
             <li>
                 <a data-toggle="pill" id="pill-group-images" href="#summary-images">Group Images</a>
             </li>
             <li>
                 <a data-toggle="pill" id="pill-provenance" href="#summary-provenance">Provenance</a>
-            </li>                                        
+            </li>
 
-        </ul>        
+        </ul>
 
         <!-- Pill tabs -->
         <div class="tab-content">
@@ -271,15 +271,15 @@
 
                     <div class="col-sm-1"></div>
                     <div class="col-sm-10">
-                        
+
                         <div class="chart-wrapper">
-                                
+
                             <div class="chart-title" id="chart-title-registration"></div>
 
                             <div class="chart-stage" id="chart-stage-registration">
                                 <div id="chart-registration"></div>
                             </div>
-                    
+
                             <div class="chart-notes" id="chart-notes-registration"></div>
 
                         </div>
@@ -307,7 +307,7 @@
                     </div>
                     <div class="col-sm-1"></div>
 
-                </div>                    
+                </div>
 
             </div>
 
@@ -319,15 +319,15 @@
 
                     <div class="col-sm-1"></div>
                     <div class="col-sm-10">
-                        
+
                         <div class="chart-wrapper">
-                                
+
                             <div class="chart-title" id="chart-title-motion"></div>
 
                             <div class="chart-stage" id="chart-stage-motion">
                                 <div id="chart-motion" style="width:95%"></div>
                             </div>
-                    
+
                             <div class="chart-notes" id="chart-notes-motion"></div>
 
                         </div>
@@ -359,51 +359,51 @@
 
             </div>
 
-            <!-- Group images tab -->           
+            <!-- Group images tab -->
             <div class="tab-pane fade" id="summary-images">
 
                 <div class="row row-eq-height">
-              
+
                     <!-- Group average T1 vs T1 template -->
                     <div class="col-sm-6 group-images-column-left">
-                    
+
                         <div class="chart-wrapper">
-                            
+
                             <div class="chart-title">Group average T1 vs T1 template</div>
 
                             <div class="chart-stage group-image">
-                                
-                                <div id="T1-groupVsTemplate" class="register" style="background-image: url('assets/group/images/template_stereotaxic_raw.png'); width: 80%; background-size: 80%; background-repeat: no-repeat; background-position: 50% 0%;"> 
+
+                                <div id="T1-groupVsTemplate" class="register" style="background-image: url('assets/group/images/template_stereotaxic_raw.png'); width: 80%; background-size: 80%; background-repeat: no-repeat; background-position: 50% 0%;">
                                     <img id="registration" class="montage" src="assets/group/images/average_t1_stereotaxic.png" width="80%" />
                                 </div>
-                        
+
                             </div>
-              
+
                             <div class="chart-notes">Hover mouse over image for comparison image. Move mouse away to reset to original image.</div>
 
                         </div>
-                    
+
                     </div>
 
                     <!-- BOLD group average vs T1 group average -->
                     <div class="col-sm-6 group-images-column-right">
-                        
+
                         <div class="chart-wrapper">
-                        
+
                             <div class="chart-title">BOLD group average vs T1 group average</div>
 
                             <div class="chart-stage group-image">
-                                    
-                                <div id="boldVsT1" class="register" style="background-image: url('assets/group/images/average_t1_stereotaxic.png'); width: 80%; background-size: 80%; background-repeat: no-repeat; background-position: 50% 0%"> 
+
+                                <div id="boldVsT1" class="register" style="background-image: url('assets/group/images/average_t1_stereotaxic.png'); width: 80%; background-size: 80%; background-repeat: no-repeat; background-position: 50% 0%">
                                     <img id="registration" class="montage" src="assets/group/images/average_func_stereotaxic.png" width="80%" />
                                 </div>
 
                             </div>
-                            
+
                             <div class="chart-notes">Hover mouse over image for comparison image. Move mouse away to reset to original image.</div>
-                        
+
                         </div>
-                    
+
                     </div>
 
                 </div>
@@ -412,37 +412,37 @@
 
                     <!-- Group BOLD mask vs T1 group average -->
                     <div class="col-sm-6 group-images-column-left">
-                    
+
                         <div class="chart-wrapper">
-                            
+
                             <div class="chart-title">Group BOLD mask vs T1 group average</div>
 
                             <div class="chart-stage group-image">
-              
-                                <div id="groupMaskVsT1" class="register" style="background-image: url('assets/group/images/average_t1_stereotaxic.png'); width: 80%; background-size: 80%; background-repeat: no-repeat; background-position: 50% 0%"> 
+
+                                <div id="groupMaskVsT1" class="register" style="background-image: url('assets/group/images/average_t1_stereotaxic.png'); width: 80%; background-size: 80%; background-repeat: no-repeat; background-position: 50% 0%">
                                     <img id="registration" class="montage" src="assets/group/images/mask_func_group_stereotaxic.png" width="80%" />
                                 </div>
 
                             </div>
-                        
+
                             <div class="chart-notes">Hover mouse over image for comparison image. Move mouse away to reset to original image.</div>
 
                         </div>
-                    
+
                     </div>
 
                     <div class="col-sm-6 group-images-column-right">
 
                         <div class="chart-wrapper">
-                        
+
                             <div class="chart-title">Average individual BOLD mask vs T1 group average</div>
 
                             <div class="chart-stage group-image">
-             
-                                <div id="avgMaskVsT1" class="register" style="background-image: url('assets/group/images/average_t1_stereotaxic.png'); width: 80%; background-size: 80%; background-repeat: no-repeat; background-position: 50% 0%"> 
+
+                                <div id="avgMaskVsT1" class="register" style="background-image: url('assets/group/images/average_t1_stereotaxic.png'); width: 80%; background-size: 80%; background-repeat: no-repeat; background-position: 50% 0%">
                                     <img id="registration" class="montage" src="assets/group/images/average_mask_func_stereotaxic.png" width="80%" />
                                 </div>
-                            
+
                             </div>
 
                             <div class="chart-notes">Hover mouse over image for comparison image. Move mouse away to reset to original image.</div>
@@ -451,7 +451,7 @@
 
                     </div>
 
-                </div>                         
+                </div>
 
             </div>
 
@@ -462,17 +462,17 @@
 
                     <!-- Pipeline overview -->
                     <div class="col-sm-6 provenance-column-left">
-                        
+
                         <div class="chart-wrapper">
 
                             <div class="chart-title">Pipeline overview</div>
-                            
+
                             <div class="chart-stage">
                                 <div id="pipeSummary"></div>
                             </div>
 
                             <div class="chart-notes"></div>
-                    
+
                         </div>
 
                     </div>
@@ -481,9 +481,9 @@
                     <div class="col-sm-6 provenance-column-right">
 
                         <div class="chart-wrapper">
-                        
+
                             <div class="chart-title">
-                                Input files for subject 
+                                Input files for subject
                                 <select class="select-subject" style="width: 50%"></select>
                             </div>
 
@@ -497,42 +497,42 @@
 
                         </div>
 
-                    </div>                       
+                    </div>
 
                 </div>
 
                 <div class="row row-eq-height">
-                    
+
                     <!-- Pipeline options -->
                     <div class="col-sm-12 provenance-column">
-                    
+
                         <div class="chart-wrapper">
-                        
+
                             <div class="chart-title">Pipeline options</div>
-                    
+
                             <div class="chart-stage">
                                 <div id="prov-pipeline-options-json"></div>
                             </div>
 
                             <div class="chart-notes">Click on {...} to collapse.</div>
-                        
+
                         </div>
-                    
+
                     </div>
 
                 </div>
 
-            </div>                                            
+            </div>
 
         </div>
 
-    </div>     
+    </div>
 
     <hr />
 
     <!-- Footer -->
     <footer class="footer">
-    
+
         <div class="container-fluid">
 
             <div class="row row-eq-height">
@@ -555,7 +555,7 @@
     <script type="text/javascript" src="lib/jquery/jquery.min.js"></script>
 
     <!-- Bootstrap -->
-    <script type="text/javascript" src="lib/bootstrap/bootstrap.min.js"></script>    
+    <script type="text/javascript" src="lib/bootstrap/bootstrap.min.js"></script>
 
     <!-- For D3 (v3) -->
     <script type="text/javascript" src="lib/d3js/d3.min.js" charset="utf-8"></script>
@@ -582,7 +582,7 @@
     <!-- Pipeline output data -->
 
     <!-- Description of input files and options -->
-    <script type="text/javascript" src="assets/summary/js/filesIn.js"></script> 
+    <script type="text/javascript" src="assets/summary/js/filesIn.js"></script>
 
     <!-- Data for chartT1 -->
     <script type="text/javascript" src="assets/summary/js/chartT1.js"></script>
@@ -597,7 +597,7 @@
     <script type="text/javascript" src="assets/group/js/listSubject.js"></script>
 
     <!-- List of runs -->
-    <script type="text/javascript" src="assets/group/js/listRun.js"></script>    
+    <script type="text/javascript" src="assets/group/js/listRun.js"></script>
 
     <!-- Text summary for the pipeline -->
     <script type="text/javascript" src="assets/summary/js/pipeSummary.js"></script>
@@ -650,7 +650,7 @@
                               "rt-column-footer-fdbefore",
                               "rt-column-footer-fdafter",
                               "rt-column-footer-volscrubbed",
-                              "rt-column-footer-volok"]                              
+                              "rt-column-footer-volok"]
                 }
             },
 
@@ -662,7 +662,7 @@
             registration: {
 
                 chartManager: null,
-                chartNotes: "Click on a bar to highlight subject. Double click to go to registration QC. Mouse scroll to zoom.",                
+                chartNotes: "Click on a bar to highlight subject. Double click to go to registration QC. Mouse scroll to zoom.",
                 generated: false,
                 dataDict: null,
                 dataTable: null,
@@ -690,13 +690,13 @@
 
             // Add header, content, and footer to the subject table
             var myTableElement = $("#subjectTable");
-            myTableElement.append("<thead><tr>" + 
-                                  "<th class='st-column-nohighlight' id='" + contents.registration.tableInfo.columns[0][0] + "'>id</th>" + 
-                                  "<th class='st-column-nohighlight' id='" + contents.registration.tableInfo.columns[1][0] + "'>name</th>" + 
-                                  "<th id='" + contents.registration.tableInfo.columns[2][0] + "'>T1 corr_target</th>" + 
-                                  "<th id='" + contents.registration.tableInfo.columns[3][0] + "'>T1 overlap_brain</th>" + 
-                                  "<th id='" + contents.registration.tableInfo.columns[4][0] + "'>BOLD corr_target</th>" + 
-                                  "<th id='" + contents.registration.tableInfo.columns[5][0] + "'>BOLD overlap_brain</th>" + 
+            myTableElement.append("<thead><tr>" +
+                                  "<th class='st-column-nohighlight' id='" + contents.registration.tableInfo.columns[0][0] + "'>id</th>" +
+                                  "<th class='st-column-nohighlight' id='" + contents.registration.tableInfo.columns[1][0] + "'>name</th>" +
+                                  "<th id='" + contents.registration.tableInfo.columns[2][0] + "'>T1 corr_target</th>" +
+                                  "<th id='" + contents.registration.tableInfo.columns[3][0] + "'>T1 overlap_brain</th>" +
+                                  "<th id='" + contents.registration.tableInfo.columns[4][0] + "'>BOLD corr_target</th>" +
+                                  "<th id='" + contents.registration.tableInfo.columns[5][0] + "'>BOLD overlap_brain</th>" +
                                   "</tr></thead><tbody>");
             for ( var textID in contents.registration.dataDict ) {
 
@@ -710,19 +710,19 @@
                             "</tr>";
                 myTableElement.append(myRow);
             }
-            myTableElement.append("</tbody><tfoot><tr>" + 
-                                  "<th id='" + contents.registration.tableInfo.footers[0] + "'>" + 
-                                  contents.registration.tableInfo.columns[0][1] + "</th>" + 
-                                  "<th id='" + contents.registration.tableInfo.footers[1] + "'>" + contents.registration.tableInfo.columns[1][1] + "</th>" + 
+            myTableElement.append("</tbody><tfoot><tr>" +
+                                  "<th id='" + contents.registration.tableInfo.footers[0] + "'>" +
+                                  contents.registration.tableInfo.columns[0][1] + "</th>" +
+                                  "<th id='" + contents.registration.tableInfo.footers[1] + "'>" + contents.registration.tableInfo.columns[1][1] + "</th>" +
                                   "<th id='" + contents.registration.tableInfo.footers[2] + "'>" + contents.registration.tableInfo.columns[2][1] + "</th>" +
                                   "<th id='" + contents.registration.tableInfo.footers[3] + "'>" + contents.registration.tableInfo.columns[3][1] + "</th>" +
                                   "<th id='" + contents.registration.tableInfo.footers[4] + "'>" + contents.registration.tableInfo.columns[4][1] + "</th>" +
                                   "<th id='" + contents.registration.tableInfo.footers[5] + "'>" + contents.registration.tableInfo.columns[5][1] + "</th>" +
-                                  "</tr></tfoot>");        
-            
+                                  "</tr></tfoot>");
+
             // Create and configure the subjects table
             //$(document).ready(function() {
-                
+
                 var table = $("#subjectTable").DataTable({
 
                     columnDefs: [
@@ -733,8 +733,8 @@
 
                     // Paging
                     // lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
-                    // pageLength: 5, 
-                    
+                    // pageLength: 5,
+
                     // Scrolling
                     scrollY: contents.general.tableHeight,
                     scrollCollapse: true,
@@ -743,7 +743,7 @@
                     responsive: true,
                     select: true
                 });
-                
+
                 $("#subjectTable tbody").on("click", "tr", function() {
 
                     // alert("You clicked on " + data[1] + "\'s row");
@@ -752,7 +752,7 @@
 
                 $("#subjectTable tbody").on("click", "tr", function() {
                     $(this).toggleClass("selected");
-                });                
+                });
 
                 // $("#subjectTable thead").on("click", "tr", function() {
 
@@ -767,7 +767,7 @@
                 $(".dataTables_scrollFoot " + "#" + contents.registration.tableInfo.footers[2]).addClass("footer-highlight");
 
                 // Save a reference to the data table
-                contents.registration.dataTable = table;               
+                contents.registration.dataTable = table;
             //});
 
             // Make subject table collapsible
@@ -779,19 +779,19 @@
 
             // Add header, content, and footer to the run table
             var myTableElement = $("#runTable");
-            myTableElement.append("<thead><tr>" + 
-                                  "<th class='st-column-nohighlight' id='" + contents.motion.tableInfo.columns[0][0] + "'>" 
-                                  + contents.motion.tableInfo.columns[0][1] + "</th>" + 
-                                  "<th class='st-column-nohighlight' id='" + contents.motion.tableInfo.columns[1][0] + "'>" 
-                                  + contents.motion.tableInfo.columns[1][1] + "</th>" + 
-                                  "<th id='" + contents.motion.tableInfo.columns[2][0] + "'>" 
-                                  + contents.motion.tableInfo.columns[2][1] + "</th>" + 
-                                  "<th id='" + contents.motion.tableInfo.columns[3][0] + "'>" 
-                                  + contents.motion.tableInfo.columns[3][1] + "</th>" + 
-                                  "<th id='" + contents.motion.tableInfo.columns[4][0] + "'>" 
-                                  + contents.motion.tableInfo.columns[4][1] + "</th>" + 
-                                  "<th id='" + contents.motion.tableInfo.columns[5][0] + "'>" 
-                                  + contents.motion.tableInfo.columns[5][1] + "</th>" + 
+            myTableElement.append("<thead><tr>" +
+                                  "<th class='st-column-nohighlight' id='" + contents.motion.tableInfo.columns[0][0] + "'>"
+                                  + contents.motion.tableInfo.columns[0][1] + "</th>" +
+                                  "<th class='st-column-nohighlight' id='" + contents.motion.tableInfo.columns[1][0] + "'>"
+                                  + contents.motion.tableInfo.columns[1][1] + "</th>" +
+                                  "<th id='" + contents.motion.tableInfo.columns[2][0] + "'>"
+                                  + contents.motion.tableInfo.columns[2][1] + "</th>" +
+                                  "<th id='" + contents.motion.tableInfo.columns[3][0] + "'>"
+                                  + contents.motion.tableInfo.columns[3][1] + "</th>" +
+                                  "<th id='" + contents.motion.tableInfo.columns[4][0] + "'>"
+                                  + contents.motion.tableInfo.columns[4][1] + "</th>" +
+                                  "<th id='" + contents.motion.tableInfo.columns[5][0] + "'>"
+                                  + contents.motion.tableInfo.columns[5][1] + "</th>" +
                                   "<th id='" + contents.motion.tableInfo.columns[6][0] + "'>"
                                   + contents.motion.tableInfo.columns[6][1] +
                                   "</tr></thead><tbody>");
@@ -808,20 +808,20 @@
                             "</tr>";
                 myTableElement.append(myRow);
             }
-            myTableElement.append("</tbody><tfoot><tr>" + 
-                                  "<th id='" + contents.motion.tableInfo.footers[0] + "'>" + 
-                                  contents.motion.tableInfo.columns[0][1] + "</th>" + 
-                                  "<th id='" + contents.motion.tableInfo.footers[1] + "'>" + contents.motion.tableInfo.columns[1][1] + "</th>" + 
-                                  "<th id='" + contents.motion.tableInfo.footers[2] + "'>" + contents.motion.tableInfo.columns[2][1] + "</th>" + 
-                                  "<th id='" + contents.motion.tableInfo.footers[3] + "'>" + contents.motion.tableInfo.columns[3][1] + "</th>" + 
-                                  "<th id='" + contents.motion.tableInfo.footers[4] + "'>" + contents.motion.tableInfo.columns[4][1] + "</th>" + 
-                                  "<th id='" + contents.motion.tableInfo.footers[5] + "'>" + contents.motion.tableInfo.columns[5][1] + "</th>" + 
+            myTableElement.append("</tbody><tfoot><tr>" +
+                                  "<th id='" + contents.motion.tableInfo.footers[0] + "'>" +
+                                  contents.motion.tableInfo.columns[0][1] + "</th>" +
+                                  "<th id='" + contents.motion.tableInfo.footers[1] + "'>" + contents.motion.tableInfo.columns[1][1] + "</th>" +
+                                  "<th id='" + contents.motion.tableInfo.footers[2] + "'>" + contents.motion.tableInfo.columns[2][1] + "</th>" +
+                                  "<th id='" + contents.motion.tableInfo.footers[3] + "'>" + contents.motion.tableInfo.columns[3][1] + "</th>" +
+                                  "<th id='" + contents.motion.tableInfo.footers[4] + "'>" + contents.motion.tableInfo.columns[4][1] + "</th>" +
+                                  "<th id='" + contents.motion.tableInfo.footers[5] + "'>" + contents.motion.tableInfo.columns[5][1] + "</th>" +
                                   "<th id='" + contents.motion.tableInfo.footers[6] + "'>" + contents.motion.tableInfo.columns[6][1] + "</th>" +
                                   "</tr></tfoot>");
-            
+
             // Create and configure the subjects table
             //$(document).ready(function() {
-                
+
                 var table = $("#runTable").DataTable({
 
                     columnDefs: [
@@ -832,7 +832,7 @@
 
                     // Paging
                     // lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
-                    // pageLength: 5, 
+                    // pageLength: 5,
 
                     // Scrolling
                     scrollY: contents.general.tableHeight,
@@ -842,7 +842,7 @@
                     responsive: true,
                     select: true,
                 });
-                
+
                 $("#runTable tbody").on("click", "tr", function() {
 
                     // alert("You clicked on " + data[1] + "\'s row");
@@ -851,7 +851,7 @@
 
                 $("#runTable tbody").on("click", "tr", function() {
                     $(this).toggleClass("selected");
-                });                
+                });
 
                 // $("#runTable thead").on("click", "tr", function() {
 
@@ -871,7 +871,7 @@
 
             // Make subject table collapsible
             // $("#runTable").collapse();
-        } 
+        }
 
         // Pill content generation
         function generateGroupContent() {
@@ -895,27 +895,27 @@
 
                 // Chart object creation
 
-                // constructor(p_data, p_divID, p_xLabel, p_yLabel, p_height, p_clickFn = null, 
+                // constructor(p_data, p_divID, p_xLabel, p_yLabel, p_height, p_clickFn = null,
                 //             p_chartTitle = "", p_chartNotes = "", p_subChart = false, p_extents = [0, 25]) {
 
                 // Chart of spatial correlation of individual BOLD data and template
                 var chartIntra = new QCDash_BarChart(dataIntra, "chart-motion", "Run",
-                                                     "spatial correlation", contents.general.chartHeight, 
+                                                     "spatial correlation", contents.general.chartHeight,
                                                      selectRun,
                                                      "Average Frame Displacement (FD)",
                                                      contents.motion.chartNotes);
 
                 // Chart of frame displacement and number of volumes
-                var chartFD = new QCDash_BarChart(dataFD, "chart-motion", "Run", "FD", 
-                                                  contents.general.chartHeight, selectRun, 
+                var chartFD = new QCDash_BarChart(dataFD, "chart-motion", "Run", "FD",
+                                                  contents.general.chartHeight, selectRun,
                                                   "# time frames scrubbed vs OK",
                                                   contents.motion.chartNotes);
 
                 // Chart of #time frames scrubbed vs OK
-                var chartNbVol = new QCDash_BarChart(dataNbVol, "chart-motion", "Run", "#time frames", 
+                var chartNbVol = new QCDash_BarChart(dataNbVol, "chart-motion", "Run", "#time frames",
                                                      contents.general.chartHeight, selectRun,
                                                      "Spatial correlation with the individual run of reference",
-                                                     contents.motion.chartNotes);                
+                                                     contents.motion.chartNotes);
 
                 // Add charts to the motion chart manager
                 contents.motion.chartManager.addChart("intra", dataIntra, chartIntra);
@@ -927,13 +927,13 @@
 
                 // Assign click events to table columns to generate the charts separately
                 for ( let index = 0; index < contents.motion.tableInfo.columns.length; index++ ) {
-    
+
                     let tableHeaderTag = $("#" + contents.motion.tableInfo.columns[index][0]);
                     let myIndex = index;
                     tableHeaderTag.on("click", function() {
 
                         if ( null !== contents.motion.tableInfo.columns[index][2] ) {
-                            
+
                             contents.motion.chartManager.generateChart(contents.motion.tableInfo.columns[index][2]);
                         }
 
@@ -944,7 +944,7 @@
                         }
 
                         // Unhighlight all other footers
-                        for ( let index2 = 0; index2 < contents.motion.tableInfo.footers.length; 
+                        for ( let index2 = 0; index2 < contents.motion.tableInfo.footers.length;
                               index2++ ) {
 
                             if ( index2 != index ){
@@ -953,13 +953,13 @@
                             }
                         }
                     });
-                } 
+                }
 
                 // Start with the third column selected
                 $("#" + contents.motion.tableInfo.columns[2][0]).click();
                 $("#" + contents.motion.tableInfo.footers[2]).addClass("footer-highlight");
             }
-        }   
+        }
 
         function generateProvenanceContent() {
 
@@ -973,31 +973,31 @@
 
                 // Create button to select subjects
                 var filesIn = null;
-                $(".select-subject").select2({ data: listSubject });  
-                $(".select-subject").on("select2:select", function(e) { 
-                    
-                    filesIn = buildFilesIn(e); 
+                $(".select-subject").select2({ data: listSubject });
+                $(".select-subject").on("select2:select", function(e) {
+
+                    filesIn = buildFilesIn(e);
                     printFiles(filesIn);
                 });
 
-                // Create the json description of initial input files  
-                let event = { 
-                    params: { 
-                        data: { 
-                            id: "1" 
-                        } 
+                // Create the json description of initial input files
+                let event = {
+                    params: {
+                        data: {
+                            id: "1"
+                        }
                     }
                 };
                 filesIn = buildFilesIn(event);
-                printFiles(filesIn); 
+                printFiles(filesIn);
 
                 // Create the json description of pipeline options
                 var node = new PrettyJSON.view.Node({
-                
+
                     el: $("#prov-pipeline-options-json"),
                     data: opt
                 });
-                node.expandAll();                   
+                node.expandAll();
             }
         }
 
@@ -1006,7 +1006,7 @@
             if ( !contents.registration.generated ) {
 
                 // Registration stats DOM contents now created and stored in memory
-                contents.registration.generated = true;                
+                contents.registration.generated = true;
 
                 // Generate and append table for subject data
                 createSubjectTable();
@@ -1014,16 +1014,16 @@
                 // Chart object creation
 
                 // Chart of registration quality (spatial correlation) between the T1 scan and the template
-                var chartT1 = new QCDash_BarChart(dataT1, "chart-registration", 
-                                                  "Subject", "spatial correlation", 
-                                                  contents.general.chartHeight, 
+                var chartT1 = new QCDash_BarChart(dataT1, "chart-registration",
+                                                  "Subject", "spatial correlation",
+                                                  contents.general.chartHeight,
                                                   selectSubject,
-                                                  "Summary T1 registration", 
+                                                  "Summary T1 registration",
                                                   contents.registration.chartNotes);
 
                 // Chart of T1 and template(?) overlap
-                var chartOverlapT1 = new QCDash_BarChart(dataOverlapT1, 
-                                                         "chart-registration", 
+                var chartOverlapT1 = new QCDash_BarChart(dataOverlapT1,
+                                                         "chart-registration",
                                                          "Subject", "overlap_brain",
                                                          contents.general.chartHeight,
                                                          selectSubject,
@@ -1032,16 +1032,16 @@
 
                 // Chart of registration quality (spatial correlation) between the functional scan and the template
                 var chartBOLD = new QCDash_BarChart(dataBOLD, "chart-registration", "Subject",
-                                                    "spatial correlation", contents.general.chartHeight, 
+                                                    "spatial correlation", contents.general.chartHeight,
                                                     selectSubject, "T1 Overlap with Template",
                                                     contents.registration.chartNotes);
-            
+
                 // Chart of brain mask overlap between individual BOLD data and template
                 var chartBrain = new QCDash_BarChart(dataBrain, "chart-registration", "Subject",
-                                                     "% overlap", contents.general.chartHeight, 
-                                                     selectSubject, 
+                                                     "% overlap", contents.general.chartHeight,
+                                                     selectSubject,
                                                      "Overlap between individual and group brain mask",
-                                                     contents.registration.chartNotes); 
+                                                     contents.registration.chartNotes);
 
                 // Add charts to registration chart manager
                 contents.registration.chartManager.addChart("t1", dataT1, chartT1);
@@ -1054,13 +1054,13 @@
 
                 // Assign click events to table columns to generate the charts separately
                 for ( let index = 0; index < contents.registration.tableInfo.columns.length; index++ ) {
-                    
+
                     let tableHeaderTag = $("#" + contents.registration.tableInfo.columns[index][0]);
                     let myIndex = index;
                     tableHeaderTag.on("click", function() {
 
                         if ( null !== contents.registration.tableInfo.columns[index][2] ) {
-                            
+
                             contents.registration.chartManager.generateChart(contents.registration.tableInfo.columns[index][2]);
                         }
 
@@ -1071,22 +1071,22 @@
                         }
 
                         // Unhighlight all other footers
-                        for ( let index2 = 0; index2 < contents.registration.tableInfo.footers.length; 
+                        for ( let index2 = 0; index2 < contents.registration.tableInfo.footers.length;
                               index2++ ) {
 
                             if ( index2 != index ){
 
                                 $(".dataTables_scrollFoot " + "#" + contents.registration.tableInfo.footers[index2]).removeClass();
                             }
-                        }                            
+                        }
                     });
-                } 
+                }
 
                 // Start with the third column selected
                 $("#" + contents.registration.tableInfo.columns[2][0]).click();
                 $("#" + contents.registration.tableInfo.footers[2]).addClass("footer-highlight");
             }
-        }        
+        }
 
         // Creates pretty-json for filesIn
         function printFiles(p_files) {
@@ -1103,30 +1103,30 @@
             let newTab = window.open(["motion.html?id=" + run], "_blank");
 
             if ( newTab ) {
-          
+
                 // Browser has allowed it to be opened
                 newTab.focus();
             } else {
-          
+
                 // Browser has blocked it
-                alert("Please allow popups for this website"); 
+                alert("Please allow popups for this website");
             }
-        }        
+        }
 
         // Creates links to registration report attached to the bars in chartT1 and chartBOLD
         function selectSubject(p_data, chart) {
 
             let subject = chart.internal.config.axis_x_categories[p_data.x];
             let newTab = window.open(["registration.html?id=" + subject], "_blank");
-            
+
             if ( newTab ) {
-          
+
                 // Browser has allowed it to be opened
                 newTab.focus();
             } else {
-                
+
                 // Browser has blocked it
-                alert("Please allow popups for this website"); 
+                alert("Please allow popups for this website");
             }
         }
 
@@ -1137,9 +1137,9 @@
 
             // Create the subject table and registration stats chart manager
             contents.registration.dataDict = createSubjectDictionary(dataT1, dataOverlapT1, dataBOLD, dataBrain);
-            contents.registration.chartManager = new QCDash_Charts(contents.registration.dataDict, 
+            contents.registration.chartManager = new QCDash_Charts(contents.registration.dataDict,
                 "chart-title-registration", "chart-notes-registration");
-            
+
             // Create the subject table and motion stats chart manager
             contents.motion.dataDict = createRunDictionary(dataRun, dataIntra, dataFD, dataNbVol);
             contents.motion.chartManager = new QCDash_Charts(contents.motion.dataDict,
@@ -1156,9 +1156,9 @@
 
             // Add DataTables column adjust to compensate for hidden Bootstrap nav pills
             $(".nav-pills a").on("shown.bs.tab", function (e) {
-                
+
                 $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
-            });            
+            });
         });
 
     </script>

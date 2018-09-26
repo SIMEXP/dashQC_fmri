@@ -4,7 +4,7 @@
 <head>
 
     <title>Report on the quality of MRI registration</title>
-  
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
     <!-- Stylesheets -->
@@ -12,7 +12,7 @@
     <style>
 
         .sliderNext {
-          
+
             position: absolute;
             top: 40%;
             right: 2.5%;
@@ -39,22 +39,22 @@
         }
 
         .sliderPrev:hover {
-    
+
             object-position: -50px 0;
         }
 
         @keyframes flickerAnimation {
-    
+
             from { opacity: 1; }
             to { opacity: 0;}
         }
 
         .register {
-         
+
             display: inline-block;
         }
         .register img:hover {
-    
+
             /*animation: flickerAnimation 1s infinite alternate ease-in-out;*/
             animation-name: flickerAnimation;
             animation-duration: 1s;
@@ -76,13 +76,13 @@
 
         #registration-pass, #registration-maybe, #registration-fail, #registration-unmark {
 
-            box-shadow: 0 2px 4px -1px rgba(0,0,0,0.1), 
-                        0 4px 5px 0 rgba(0,0,0,0.1), 
+            box-shadow: 0 2px 4px -1px rgba(0,0,0,0.1),
+                        0 4px 5px 0 rgba(0,0,0,0.1),
                         0 1px 10px 0 rgba(0,0,0,0.12) !important;
         }
 
         #registration-unmark {
-            
+
             background-color: #A1A1A1;
             border-color: #A1A1A1;
             color: #FFFFFF;
@@ -92,7 +92,7 @@
 
             background-color: #808080;
             border-color: #808080;
-        }       
+        }
 
     </style>
 
@@ -100,7 +100,7 @@
     <link rel="stylesheet" type="text/css" href="assets/general/css/qc_dash.css" />
 
     <!-- Keen.io -->
-    <link rel="stylesheet" type="text/css" href="lib/bootstrap/bootstrap.min.css" /> 
+    <link rel="stylesheet" type="text/css" href="lib/bootstrap/bootstrap.min.css" />
     <link rel="stylesheet" type="text/css" href="lib/keen/keen-dashboards.css" />
 
     <!-- Select2 -->
@@ -112,33 +112,33 @@
 
     <!-- Navbar -->
     <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-    
+
         <div class="container-fluid">
-      
+
             <div class="navbar-header">
-                
+
                 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-          
+
                     <span class="sr-only">Toggle navigation</span>
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
-        
+
                 </button>
-        
-                <a class="navbar-brand" href="http://niak.simexp-lab.org/pipe_preprocessing.html">
-                    fMRI preprocessing pipeline
+
+                <a class="navbar-brand" href="https://dashqc-fmri.readthedocs.io/en/latest/index.html">
+                    dashQC_fmri
                 </a>
-      
+
             </div>
 
             <div class="navbar-collapse collapse">
-                
+
                 <ul class="nav navbar-nav navbar-left">
 
                     <li class="navbar_item"><a href="index.html">Summary</a></li>
                     <li class="navbar_item navbar-brand-current"><a href="registration_new.html">Registration</a></li>
-                    <li class="navbar_item"><a href="motion.html">Motion</a></li>                 
+                    <li class="navbar_item"><a href="motion.html">Motion</a></li>
 
                 </ul>
 
@@ -158,7 +158,7 @@
                     </li>
 
                 </ul>
-            
+
             </div>
 
         </div>
@@ -170,28 +170,28 @@
 
         <!-- Registration images -->
         <div class="row">
-        
+
             <!-- Individual vs template T1 scan for subject -->
             <div class="col-sm-6">
-            
+
                 <div class="chart-wrapper">
-                
+
                     <div class="chart-title" id="t1-chart-title">
                         Individual vs template T1 scan for subject
                         <!-- <select class=#subject-select" style="width: 50%"></select> -->
                     </div>
 
                     <div class="chart-stage cs-reg-img">
-                        
+
                         <div id="T1-indVsTemplate" class="register">
                             <img class="T1 montage">
                         </div>
-            
+
                         <img class="sliderNext" src="lib/jsImageSlider/navbuttons.png" >
                         <img class="sliderPrev" src="lib/jsImageSlider/navbuttons.png" >
-          
+
                     </div>
-          
+
                     <div class="chart-notes">Click or press left/right arrows for prev/next subject. Hover over image for template scan. Move mouse away to revert to original image.</div>
 
                 </div>
@@ -200,20 +200,20 @@
 
             <!-- BOLD vs T1 scan for subject -->
             <div class="col-sm-6">
-    	   
+
                 <div class="chart-wrapper">
-      	         
+
                     <div class="chart-title" id="bold-chart-title">
                         BOLD vs T1 scan for subject
                         <!-- <select id=#subject-select" class=#subject-select" style="width: 50%"></select> -->
                     </div>
-                    
+
                     <div class="chart-stage cs-reg-img">
-                        
+
                         <div id="boldVsT1" class="register">
                             <img class="BOLD montage">
                         </div>
-                        
+
                         <img class="sliderNext" src="lib/jsImageSlider/navbuttons.png" >
                         <img class="sliderPrev" src="lib/jsImageSlider/navbuttons.png" >
                     </div>
@@ -221,7 +221,7 @@
                     <div class="chart-notes">
                         Click or press left/right arrows for prev/next subject. Hover over image for individual T1 scan. Move mouse away to revert to original image.
                     </div>
-                
+
                 </div>
 
             </div>
@@ -245,8 +245,8 @@
                             <span id="subject-status-span" style="font-weight: normal;"></span>
                         </div>
                     </div>
-                    
-                    <!-- Saving form data: 
+
+                    <!-- Saving form data:
                         https://stackoverflow.com/questions/13685263/can-i-save-input-from-form-to-txt-in-html-using-javascript-jquery-and-then-us -->
                     <!-- NOTE: Solutions to consider
 
@@ -270,11 +270,11 @@
 
                         <!-- <button type="submit" class="btn btn-success" id="formsavebutton">Success</button>
                         <input id="the-file-input" type="file"> -->
-                    </div>                    
+                    </div>
 
                 </div>
 
-            </div>            
+            </div>
 
             <div class="col-sm-2">
 
@@ -283,9 +283,9 @@
                     <div class="row">
 
                         <div class="col-sm-1"></div>
-                        
+
                         <div class="col-sm-4">
-                            
+
                             <div class="row" style="margin-bottom: 1em;">
                                 <button type="button" class="btn btn-success btn-md" id="registration-pass" style="margin-right: 1em;  min-width: 8em;"><span class="button_hotkey_letter">P</span>ass</button>
                                 <!-- color: #FFF; background-color: #23D160; border-color: #23D160; -->
@@ -301,7 +301,7 @@
                             <div class="row" style="margin-bottom: 1em;">
                                 <button type="button" class="btn btn-md" id="registration-unmark" style="margin-right: 1em; min-width: 8em;"><span class="button_hotkey_letter">U</span>nmark</button>
                                 <!-- color: #FFF; background-color: #D7D7D7; border-color: #D7D7D7; -->
-                            </div>                            
+                            </div>
 
                         </div>
 
@@ -312,10 +312,10 @@
                 <div class="col-sm-7"></div>
 
                 <!-- <div style="float: right; position: relative; transform:  -ms-transform: translate(0%, 150%); transform: translate(0%, 150%);"></div> -->
-            
+
             </div>
 
-        </div>      
+        </div>
 
     </div>
 
@@ -323,7 +323,7 @@
 
     <!-- Footer -->
     <footer class="footer">
-    
+
         <div class="container-fluid">
 
             <div class="row">
@@ -343,12 +343,12 @@
     <!-- Dependencies -->
 
     <!-- For D3 -->
-    <script type="text/javascript" src="lib/d3js/d3.min.js" charset="utf-8"></script>    
+    <script type="text/javascript" src="lib/d3js/d3.min.js" charset="utf-8"></script>
 
     <!-- jQuery -->
     <script type="text/javascript" src="lib/jquery/jquery.min.js"></script>
 
-    <!-- Twitter Bootstrap -->    
+    <!-- Twitter Bootstrap -->
     <script type="text/javascript" src="lib/bootstrap/bootstrap.min.js"></script>
 
     <!-- Keen.io -->
@@ -361,17 +361,17 @@
     <!-- Custom external scripts -->
 
     <!-- Description of input files and options -->
-    <script type="text/javascript" src="assets/summary/js/filesIn.js"></script>    
+    <script type="text/javascript" src="assets/summary/js/filesIn.js"></script>
 
     <!-- List of subjects -->
-    <script src="assets/group/js/listSubject.js"></script> 
+    <script src="assets/group/js/listSubject.js"></script>
 
     <!-- QC Dashboard Objects -->
     <script type="text/javascript" src="assets/general/js/qc_dash_objects.js"></script>
 
     <!-- Live reload - for development use only -->
-    <!-- <script>document.write('<script src="http://' + (location.host || '${1:localhost}').split(':')[0] + ':${2:35729}/livereload.js?snipver=1"></' + 'script>')</script> -->  
-  
+    <!-- <script>document.write('<script src="http://' + (location.host || '${1:localhost}').split(':')[0] + ':${2:35729}/livereload.js?snipver=1"></' + 'script>')</script> -->
+
     <!-- Main script -->
     <script>
 
@@ -445,25 +445,25 @@
 
             // Find subject ID number in provided data given a subject name
             function findSubjectIDFromName(p_data, p_subject) {
-                
+
                 let foundID = null;
                 for ( let index = 0; index < p_data.length; index++ ) {
 
                     if ( p_data[index].text === p_subject ) {
-                    
+
                         foundID = p_data[index].id;
                         break;
-                    }      
+                    }
                 }
 
-                return foundID; 
+                return foundID;
             }
 
-            // Function to parse the page parameters  
+            // Function to parse the page parameters
             function getParameterByName(p_name, p_url) {
-                
+
                 if ( !p_url ) {
-                 
+
                     p_url = window.location.href;
                 }
 
@@ -477,7 +477,7 @@
                 }
 
                 if ( !results[2] ) {
-                 
+
                     return '';
                 }
 
@@ -492,15 +492,15 @@
                 currId = parseInt(currId);
 
                 if ( currId < listSubject.length ) {
-              
+
                     currId+=1;
                 } else {
-                    
+
                     currId = 1;
                 }
 
                 var evt = {
-                    
+
                     params: {
 
                         data: {
@@ -511,7 +511,7 @@
                 };
                 switchSubjects(evt);
             }
-        
+
             // Moves back to the previous subject
             function previousSubject() {
 
@@ -520,10 +520,10 @@
                 currId = parseInt(currId);
 
                 if ( currId > 1 ) {
-                   
+
                    currId -= 1;
                 } else {
-                
+
                    currId = listSubject.length;
                 }
 
@@ -540,7 +540,7 @@
                 switchSubjects(evt);
             }
 
-            // Changes subjects with left and right arrows (previous and next, respectively)  
+            // Changes subjects with left and right arrows (previous and next, respectively)
             function registrationKeyDown(p_key) {
 
                 // Hotkeys only work if textarea does not currently have focus
@@ -585,23 +585,23 @@
 
             // Updates images
             function setImage (p_event) {
-      
+
                 // Get subject index and ID
                 var id = p_event.params.data.id;
                 subject = $("#subject-select option[value=" + id + "]").text();
-        
+
                 // Update the selection of the subject button
                 $es = $("#subject-select");
                 $es.val(id);
                 $es.trigger("change");
-        
+
                 // Grab the T1 and BOLD div, and build new empty figures
                 var figBOLD = $(".BOLD");
                 var newFigBOLD = document.createElement("img");
                 var figT1 = $(".T1");
                 var newFigT1 = document.createElement("img");
-        
-                // Populate figures    
+
+                // Populate figures
                 newFigBOLD.src = "assets/registration/images/" + subject + "_func.png";
                 newFigBOLD.setAttribute("width", "70%");
                 newFigBOLD.style.position = "relative";
@@ -613,7 +613,7 @@
                 newFigT1.style.left = "0px";
                 newFigT1.className = "T1";
 
-                // Update figures        
+                // Update figures
                 figBOLD.replaceWith(newFigBOLD);
                 figT1.replaceWith(newFigT1);
                 figBoldVsT1 = $("#boldVsT1");
@@ -628,7 +628,7 @@
                 figT1vsTemplate.css("backgroundSize","70%");
                 figT1vsTemplate.css("backgroundRepeat","no-repeat");
                 figT1vsTemplate.css("backgroundPosition","50% 0%");
-            }            
+            }
 
             // Translates a status hot key to text, displays the status onscreen, and stores it
             function setSubjectStatus(p_subject, p_key) {
@@ -656,14 +656,14 @@
                     case registrationHotKeys.FAIL_UPPERCASE:
                     case registrationHotKeys.FAIL_LOWERCASE:
                         translatedStatus = registrationStatus.FAIL;
-                        break;                                                
+                        break;
                 }
 
                 // Display the status text on the subject data widget
                 $("#subject-status-span").text(translatedStatus);
 
                 // Set the new registration status for this subject image in web storage
-                webStorageElement.setSubjectStatus(p_subject, translatedStatus);                
+                webStorageElement.setSubjectStatus(p_subject, translatedStatus);
             }
 
             function setUIToCurrentSubject(p_webStorageObject, p_subjectList, p_uiList) {
@@ -675,10 +675,10 @@
                 for ( let index = 0; index < p_subjectList.length; index++ ) {
 
                     if ( p_subjectList[index].text === subjectName ) {
-                    
+
                         foundID = p_subjectList[index].id;
                         break;
-                    }      
+                    }
                 }
                 if ( null == foundID ) {
 
@@ -689,7 +689,7 @@
                 // Fill in DOM objects
                 $("#" + p_uiList.select).select({ params: { data: { id: foundID } } });
                 $("#" + p_uiList.comments).val(p_webStorageObject.subjects[subjectName].comments);
-                $("#" + p_uiList.status).text(p_webStorageObject.subjects[subjectName].status);        
+                $("#" + p_uiList.status).text(p_webStorageObject.subjects[subjectName].status);
             }
 
 
@@ -712,36 +712,36 @@
                     case 70:
                     case 102:
                         text = "Fail";
-                        break;                                                
+                        break;
                     }
                 }
 
                 return text;
-            }            
+            }
 
             // Code to execute when switching between subjects for registration
             function switchSubjects(p_event) {
 
-                let newSubject = $("#subject-select option[value=" + 
+                let newSubject = $("#subject-select option[value=" +
                                    p_event.params.data.id + "]").text();
 
                 let status = "";
 
                 // Set up a new subject for session storage input (status/comments)
                 if ( webStorageElement ) {
-                    
+
                     webStorageElement.setSubject(newSubject, p_event.params.data.id);
                     status = webStorageElement.getSubjectStatus(newSubject);
 
                     // Change text area to any previous comments for new subject
-                    webStorageElement.restoreCommentsToTextArea();                    
+                    webStorageElement.restoreCommentsToTextArea();
                 }
 
                 // Get the QC status of this subject
                 if ( "" == status ) {
                     status = "Unmarked";
                 }
-                
+
                 // Change images
                 setImage(p_event);
 
@@ -754,12 +754,12 @@
             // === Main script === //
 
             // Get initial scan file info for first subject
-            var event = { params: { data: { id: "1" } } }; 
-            var filesIn = buildFilesIn(event);            
-      
+            var event = { params: { data: { id: "1" } } };
+            var filesIn = buildFilesIn(event);
+
             // Add a subject select dropdown
             $("#subject-select").select2({ data: listSubject });
-            $("#subject-select").on("select2:select", function (p_event) { 
+            $("#subject-select").on("select2:select", function (p_event) {
 
                 // Get new file information for this subject
                 filesIn = buildFilesIn(p_event);
@@ -774,7 +774,7 @@
                                             "Your comments here...",
                                             "registration-comment-textarea",
                                             $("#subject-select option[value=\"1\"]").text(),
-                                            switchSubjects);  
+                                            switchSubjects);
 
             // Determine first subject to load on to registration page
 
@@ -785,10 +785,10 @@
                 // Check to make sure this subject is in the subject list outputted from the pipeline
                 subjectToLoad.id = findSubjectIDFromName(listSubject, subjectToLoad.name);
                 if ( !subjectToLoad.id ) {
-                    
+
                     subjectToLoad.id = "1";
                 }
-            // Check in web storage for a last subject from a previous registration session    
+            // Check in web storage for a last subject from a previous registration session
             } else if ( webStorageElement.hasLastSubjectRecord() ) {
 
                 // Set internal storage to web storage's last subject
@@ -801,10 +801,10 @@
             // Save ID to event data structure
             event.params.data.id = subjectToLoad.id;
 
-            // // Read page parameters and update accordingly    
+            // // Read page parameters and update accordingly
             // var subjectName = getParameterByName("id");
             // if ( !subjectName ) {
-                
+
             //     // Default to first subject in the data list
             //     subjectName = listSubject[0]["text"];
 
@@ -822,20 +822,20 @@
             //     }
             // }
             // // Else retrieve subject from page parameters
-            
+
             // // Check to make sure this subject is in the subject list outputted from the pipeline
             // id = findSubjectIDFromName(listSubject, subjectName);
             // if ( !id ) {
-                
+
             //     id = "1";
             //     event.params.data.id = id;
             //     filesIn = buildFilesIn(event);
             // }
 
             // Get the file information for the selected subject
-            filesIn = buildFilesIn(event);            
+            filesIn = buildFilesIn(event);
 
-            // Switch to whatever subject  
+            // Switch to whatever subject
             switchSubjects(event);
 
 
@@ -860,7 +860,7 @@
             });
             $("#registration-unmark").click(function(){
                 setSubjectStatus(currentSubject(), registrationHotKeys.UNMARKED_UPPERCASE);
-            }); 
+            });
 
             document.getElementById("inputfile-import");
 
@@ -870,8 +870,8 @@
                 QCDash_WebStorage_SubjectData.importFile(webStorageElement,
                                                          document.getElementById("file").files[0],
                                                          listSubject,
-                                                         { 
-                                                             select: "subject-select", 
+                                                         {
+                                                             select: "subject-select",
                                                              comments: "registration-comment-textarea",
                                                              status: "subject-status-span"
                                                          },
@@ -880,16 +880,16 @@
 
             // Export button
             $("#qcdash-export-button").click(function() {
-                
-                let fileURL = QCDash_WebStorage_SubjectData.exportFile(webStorageElement.exportFilePrefix, 
+
+                let fileURL = QCDash_WebStorage_SubjectData.exportFile(webStorageElement.exportFilePrefix,
                                 webStorageElement.storageID);
                 $("#qcdash-export-link").attr("href", fileURL);
                 $("#qcdash-export-link").attr("download", webStorageElement.exportFilename);
-            });            
+            });
 
-            
+
         });
-  
+
     </script>
 
 </body>
