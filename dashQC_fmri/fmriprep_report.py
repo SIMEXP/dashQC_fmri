@@ -484,10 +484,10 @@ def make_report(prep_p, report_p, raw_p):
                                          'VOL_OK', 'VOL_scrubbed']}
     for rid, run in enumerate(runs):
         run_start = time.time()
+        run_level['Run'].append(run)
         run_name = re.search(r'.*(?=_space-MNI152NLin2009cAsym_preproc)',
                              run).group()
         sub_name = re.search(r'.*(?=_task)', run_name).group()
-        run_level['Run'].append(run_name)
 
         run_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(run)
         run_mask_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(
