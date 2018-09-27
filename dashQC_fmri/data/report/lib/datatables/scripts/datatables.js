@@ -67,7 +67,7 @@
 		// Browser
 		factory( jQuery, window, document );
 	}
-};
+}
 (function( $, window, document, undefined ) {
 	"use strict";
 
@@ -6422,7 +6422,7 @@
 	
 			_fnCallbackFire( settings, 'aoStateLoaded', 'stateLoaded', [settings, s] );
 			callback();
-		};
+		}
 	
 		if ( ! settings.oFeatures.bStateSave ) {
 			callback();
@@ -20629,7 +20629,7 @@ $.extend( FixedHeader.prototype, {
 				.appendTo( 'body' );
 
 			// Insert a fake thead/tfoot into the DataTable to stop it jumping around
-			itemDom.placeholder = itemElement.clone( false );
+			itemDom.placeholder = itemElement.clone( false )
 			itemDom.placeholder
 				.find( '*[id]' )
 				.removeAttr( 'id' );
@@ -23076,7 +23076,7 @@ $.extend( Responsive.prototype, {
 
 		// A position absolute table would take the table out of the flow of
 		// our container element, bypassing the height and width (Scroller)
-		$( clonedTable ).css( 'position', 'relative' );
+		$( clonedTable ).css( 'position', 'relative' )
 		
 		var inserted = $('<div/>')
 			.css( {
