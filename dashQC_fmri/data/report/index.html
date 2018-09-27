@@ -255,7 +255,7 @@
                 <a data-toggle="pill" id="pill-group-images" href="#summary-images">Group Images</a>
             </li>
             <li>
-                <a data-toggle="pill" id="pill-provenance" href="#summary-provenance">Provenance</a>
+                <a data-toggle="pill" id="pill-provenance" href="#summary-provenance">Provenance Information</a>
             </li>
 
         </ul>
@@ -369,7 +369,7 @@
 
                         <div class="chart-wrapper">
 
-                            <div class="chart-title">Group average T1 vs T1 template</div>
+                            <div class="chart-title">T1 group average vs T1 template</div>
 
                             <div class="chart-stage group-image">
 
@@ -415,7 +415,7 @@
 
                         <div class="chart-wrapper">
 
-                            <div class="chart-title">Group BOLD mask vs T1 group average</div>
+                            <div class="chart-title">BOLD group mask vs T1 group average</div>
 
                             <div class="chart-stage group-image">
 
@@ -435,7 +435,7 @@
 
                         <div class="chart-wrapper">
 
-                            <div class="chart-title">Average individual BOLD mask vs T1 group average</div>
+                            <div class="chart-title">BOLD average of individual masks vs T1 group average</div>
 
                             <div class="chart-stage group-image">
 
@@ -902,19 +902,19 @@
                 var chartIntra = new QCDash_BarChart(dataIntra, "chart-motion", "Run",
                                                      "spatial correlation", contents.general.chartHeight,
                                                      selectRun,
-                                                     "Average Frame Displacement (FD)",
+                                                     "Spatial correlation with the individual run of reference",
                                                      contents.motion.chartNotes);
 
                 // Chart of frame displacement and number of volumes
                 var chartFD = new QCDash_BarChart(dataFD, "chart-motion", "Run", "FD",
                                                   contents.general.chartHeight, selectRun,
-                                                  "# time frames scrubbed vs OK",
+                                                  "Impoact of motion censoring on mean FD",
                                                   contents.motion.chartNotes);
 
                 // Chart of #time frames scrubbed vs OK
                 var chartNbVol = new QCDash_BarChart(dataNbVol, "chart-motion", "Run", "#time frames",
                                                      contents.general.chartHeight, selectRun,
-                                                     "Spatial correlation with the individual run of reference",
+                                                     "Impoact of motion censoring on available time points",
                                                      contents.motion.chartNotes);
 
                 // Add charts to the motion chart manager
@@ -1018,29 +1018,29 @@
                                                   "Subject", "spatial correlation",
                                                   contents.general.chartHeight,
                                                   selectSubject,
-                                                  "Summary T1 registration",
+                                                  "Correlation of individual T1 with template",
                                                   contents.registration.chartNotes);
 
                 // Chart of T1 and template(?) overlap
                 var chartOverlapT1 = new QCDash_BarChart(dataOverlapT1,
                                                          "chart-registration",
-                                                         "Subject", "overlap_brain",
+                                                         "Subject", "% overlap",
                                                          contents.general.chartHeight,
                                                          selectSubject,
-                                                         "Summary BOLD registration",
+                                                         "Overlap between individual and template mask",
                                                          contents.registration.chartNotes);
 
                 // Chart of registration quality (spatial correlation) between the functional scan and the template
                 var chartBOLD = new QCDash_BarChart(dataBOLD, "chart-registration", "Subject",
                                                     "spatial correlation", contents.general.chartHeight,
-                                                    selectSubject, "T1 Overlap with Template",
+                                                    selectSubject, "Correlation of BOLD with individual T1",
                                                     contents.registration.chartNotes);
 
                 // Chart of brain mask overlap between individual BOLD data and template
                 var chartBrain = new QCDash_BarChart(dataBrain, "chart-registration", "Subject",
                                                      "% overlap", contents.general.chartHeight,
                                                      selectSubject,
-                                                     "Overlap between individual and group brain mask",
+                                                     "Overlap between individual BOLD mask and group brain mask",
                                                      contents.registration.chartNotes);
 
                 // Add charts to registration chart manager
