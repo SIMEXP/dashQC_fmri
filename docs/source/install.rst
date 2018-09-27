@@ -60,6 +60,6 @@ Running ``dashQC_fmri`` without installation
 
 The python modules of``dashQC_fmri`` can be run directly from the command line
 without installation. Please make sure to first
-`install the dependencies <Dependencies>`_.
+install the `Dependencies`_.
 
 
