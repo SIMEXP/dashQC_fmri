@@ -13,6 +13,7 @@ Contents
    :caption: Contents:
 
    install
+   prepare
    usage
    known issues
    contribute

@@ -41,6 +41,7 @@ release = 'alpha'
 extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.githubpages',
+    'sphinx.ext.autosectionlabel'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
