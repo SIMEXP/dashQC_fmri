@@ -17,12 +17,16 @@ import pandas as pd
 import nibabel as nib
 import pathlib as pal
 from PIL import Image
+# Set figure backend
+import matplotlib
+matplotlib.use('Agg')
 import multiprocessing as mp
 from distutils import dir_util
 from matplotlib import gridspec
 from nilearn import image as ni
 from nilearn import plotting as nlp
 from matplotlib import pyplot as plt
+
 
 warnings.filterwarnings('ignore')
 
