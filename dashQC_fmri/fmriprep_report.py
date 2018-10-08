@@ -232,11 +232,18 @@ def motion_figure(img_path, figure_path, x=3, y=1, dpi=100):
     buf.close()
 
 
-def make_motion_grid(path):
+def make_motion_grid(img_path, figure_path, x_step=3, y_step=1, dpi=100):
     # TODO make useful
+    # TODO use bytestream pasting for speedup
     # Make a time series png
-    func_i = nib.load(path)
+    # Ensure all paths are pathlib objects
+    if not type(img_path) == pal.Path:
+        img_path = pal.Path(img_path)
+    if not type(figure_path) == pal.Path:
+        figure_path = pal.Path(figure_path)
 
+    # Load the image
+    func_i = nib.load(str(img_path))
     # Find the right dimensions for the grid
     n_t = func_i.shape[-1]
 
@@ -249,16 +256,20 @@ def make_motion_grid(path):
         else:
             y = np.floor(n_t / x) + n_t % x
 
-    f = plt.figure(figsize=(x * 100, 1))
-    gs = gridspec.GridSpec(y, 100, hspace=0, wspace=0)
+    x = np.int(x)
+    y = np.int(y)
+
+    f = plt.figure(figsize=(x * x_step, y * y_step))
+    gs = gridspec.GridSpec(y, x, hspace=0, wspace=0)
     gs.update(bottom=0, left=0, right=1, top=1)
-    for i in np.arange(100):
+    for i in np.arange(n_t):
         ax = f.add_subplot(gs[i.astype(int)])
         nlp.plot_stat_map(ni.index_img(func_i, i), annotate=False,
                           draw_cross=False, black_bg=True,
                           cut_coords=(1, 1, 1), display_mode='ortho',
                           axes=ax, colorbar=False)
-    return f
+
+    f.savefig(figure_path, dpi=dpi, transparent=True)
 
 
 def make_motion_str(path):
