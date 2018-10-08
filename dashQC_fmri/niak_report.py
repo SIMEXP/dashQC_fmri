@@ -9,9 +9,32 @@ Script for copying NIAK fMRI preprocessing report output into new folder structu
 import os
 import glob
 import shutil
+import inspect
 import argparse
+import pathlib as pal
+from distutils import dir_util
 
 copy_debug = False
+
+
+def populate_report(report_p):
+    # Copy the template into the report folder
+    repo_p = pal.Path(inspect.getfile(make_report)).parents[0].absolute()
+    dir_util.copy_tree(str(repo_p / 'data/report'), str(report_p), verbose=0)
+    # Create the directory tree for the files that are yet to be created
+    tree_structure = [
+        'assets/group/images',
+        'assets/group/js',
+        'assets/motion/images',
+        'assets/motion/js',
+        'assets/registration/images',
+        'assets/summary/js',
+    ]
+    for branch in tree_structure:
+        branch_p = report_p / branch
+        branch_p.mkdir(parents=True, exist_ok=True)
+
+    return
 
 
 def clean_folder(p_folder):
@@ -40,37 +63,7 @@ def make_report(preproc_dir, report_dir):
 
     # (1) In output folder create the following folders:
     print("Creating new folder structure in {0}...".format(report_dir))
-
-    # assets
-    create_folder(report_dir + "assets")
-
-    # assets/group
-    # assets/group/images
-    # assets/group/js
-    create_folder(report_dir + "assets{0}group".format(os.sep))
-    create_folder(report_dir + "assets{0}group{0}images".format(os.sep))
-    create_folder(report_dir + "assets{0}group{0}js".format(os.sep))
-
-    # assets/motion
-    # assets/motion/html
-    # assets/motion/images
-    # assets/motion/js
-    create_folder(report_dir + "assets{0}motion".format(os.sep))
-    create_folder(report_dir + "assets{0}motion{0}html".format(os.sep))
-    create_folder(report_dir + "assets{0}motion{0}images".format(os.sep))
-    create_folder(report_dir + "assets{0}motion{0}js".format(os.sep))
-
-    # assets/registration
-    # assets/registration/csv
-    # assets/registration/images
-    create_folder(report_dir + "assets{0}registration".format(os.sep))
-    create_folder(report_dir + "assets{0}registration{0}csv".format(os.sep))
-    create_folder(report_dir + "assets{0}registration{0}images".format(os.sep))
-
-    # assets/summary
-    # assets/summary/js
-    create_folder(report_dir + "assets{0}summary".format(os.sep))
-    create_folder(report_dir + "assets{0}summary{0}js".format(os.sep))
+    populate_report(report_dir)
 
     # (2) Copy files from old folder structure into new one
 
