@@ -705,8 +705,11 @@ if __name__ == "__main__":
                         help="desired path for the report output")
     parser.add_argument("raw_dir", type=str,
                         help="bids conform directory of the raw fmriprep input")
+    parser.add_argument("-n_cpu", "--number_of_cpus", type=int, default=mp.cpu_count()-2,
+                        help="specify the number of CPUs that should be used by the report generator")
     args = parser.parse_args()
 
     make_report(pal.Path(args.preproc_dir),
                 pal.Path(args.report_dir),
-                pal.Path(args.raw_dir))
+                pal.Path(args.raw_dir),
+                parser.number_of_cpus)
