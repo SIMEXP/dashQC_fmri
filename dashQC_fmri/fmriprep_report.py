@@ -6,6 +6,7 @@ Module for generating the dashboard input data for fmriprep outputs
 
 import io
 import re
+import sys
 import json
 import time
 import inspect
@@ -16,6 +17,7 @@ import pandas as pd
 import nibabel as nib
 import pathlib as pal
 from PIL import Image
+import multiprocessing as mp
 from distutils import dir_util
 from matplotlib import gridspec
 from nilearn import image as ni
@@ -231,6 +233,8 @@ def motion_figure(img_path, figure_path, x=3, y=1, dpi=100):
     # Close the stream
     buf.close()
 
+    return 0
+
 
 def make_motion_grid(img_path, figure_path, x_step=3, y_step=1, dpi=100):
     # TODO make useful
@@ -317,7 +321,7 @@ def save_json(d, path):
         f.write(json.dumps(d, indent=4))
 
 
-def make_report(prep_p, report_p, raw_p):
+def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
     if not type(report_p) == pal.Path:
         report_p = pal.Path(report_p)
     if not type(raw_p) == pal.Path:
@@ -380,9 +384,30 @@ def make_report(prep_p, report_p, raw_p):
     temp_mask = nib.load(str(mask_p)).get_data().astype(bool)
 
     # Files generated once per run
-    # TODO find a better way to get the scrub mask than from the string generator
+    # TODO find better way to get the scrub mask than from the string generator
     run_level = {var: list() for var in ['Run', 'FD_before', 'FD_after',
                                          'VOL_OK', 'VOL_scrubbed']}
+    # Build the joblist for the motion figure which takes up most of the time
+    motion_joblist = list()
+    for rid, run in enumerate(runs):
+        run_level['Run'].append(run)
+        run_name = re.search(r'.*(?=_space-MNI152NLin2009cAsym_preproc)',
+                             run).group()
+        sub_name = re.search(r'.*(?=_task)', run_name).group()
+        run_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(run)
+        # Reconstruct the name of the original run
+        run_raw_path = raw_p / sub_name / 'func' / '{}.nii.gz'.format(run_name)
+        # Setup the native figures
+        motion_joblist.append((str(run_raw_path), report_p /
+                      data_structure['fig_native_motion'].format(run)))
+        # Make the standard space figure
+        motion_joblist.append((str(run_path), report_p /
+                      data_structure['fig_standard_motion'].format(run)))
+    # Spawn the workers for the motion figures
+    pool = mp.Pool(processes=n_cpu)
+    res_pool = pool.starmap_async(motion_figure, motion_joblist)
+    start_movies = time.time()
+
     for rid, run in enumerate(runs):
         run_start = time.time()
         run_level['Run'].append(run)
@@ -393,7 +418,8 @@ def make_report(prep_p, report_p, raw_p):
         run_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(run)
         run_mask_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(
             re.sub('_preproc', '_brainmask', run))
-        # Group mask - we are resampling here because not all EPI sequences necessarily have the same acquisition matrix
+        # Group mask - we are resampling here because not all EPI sequences
+        # necessarily have the same acquisition matrix
         func_i = nib.load(str(run_path))
         func_avg_i = nib.Nifti1Image(np.mean(func_i.get_data(), 3),
                                      affine=func_i.affine, header=func_i.header)
@@ -429,14 +455,10 @@ def make_report(prep_p, report_p, raw_p):
         target_figure(str(run_raw_path),
                       report_p /
                       data_structure['fig_native_target'].format(run))
-        motion_figure(str(run_raw_path), report_p /
-                      data_structure['fig_native_motion'].format(run))
         # Make the standard space figure
         target_figure(str(run_path),
                       report_p / data_structure['fig_standard_target'].format(
                           run))
-        motion_figure(str(run_path), report_p /
-                      data_structure['fig_standard_motion'].format(run))
 
         # Make the dataMotion file
         data_motion_str, scrub_mask, fd = make_motion_str(str(confound_path))
@@ -447,9 +469,10 @@ def make_report(prep_p, report_p, raw_p):
         save_js(data_motion_str, str(report_p /
                                      data_structure['run_motion'].format(run)))
         print(
-            'Run {}/{} done. Took {:.2f}s. {} ts: {}'.format(rid + 1, len(runs),
-                                                             time.time() - run_start,
-                                                             n_t, run))
+            'Run {}/{} done. Took {:.2f}s. {} #ts: {}'.format(rid + 1,
+                                                              len(runs),
+                                                        time.time() - run_start,
+                                                              n_t, run))
     # Make the FD file
     fd_str = make_named_str('dataFD', ('Run', run_level['Run']),
                             ('FD_before', run_level['FD_before']),
@@ -592,6 +615,29 @@ def make_report(prep_p, report_p, raw_p):
                                     ('overlap_brain', sub_level['T1_over']))
     chart_t1_str = '\n'.join([t1_str, t1_overlap_str])
     save_js(chart_t1_str, str(report_p / data_structure['chartT1']))
+
+    # Make sure the motion figures are done:
+    if not res_pool.ready():
+        print('Almost done, we are currently waiting for the scanner time '
+              'series movies to render. This can take a long time. If you'
+              'want to speed up this process, increase the number of CPUs with'
+              'n_cpu.')
+
+    while True:
+        if not res_pool.ready():
+            sys.stdout.write('\rMovies have been rendering for {:.2f}s'.format(
+                time.time() - start_movies))
+            sys.stdout.flush()
+            time.sleep(5)
+        else:
+            if res_pool.successful():
+                print('\nAll rendering jobs have completed. Checking if they '
+                      'were successful.')
+            # Get the returns to possibly raise an exception here.
+            r = res_pool.get()
+            break
+    print('\n\n All complete. Check out your report at {}.'
+          '\nGoodbye'.format(report_p))
     return 'OK'
 
 
