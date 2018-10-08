@@ -325,13 +325,47 @@ def save_json(d, path):
         f.write(json.dumps(d, indent=4))
 
 
+def _run_wrapper(run_path, run_raw_path, standard_target_path, native_target_path,
+                 run_mask_path, confound_path, temp_i):
+
+    # Group mask - we are resampling here because not all EPI sequences
+    # necessarily have the same acquisition matrix
+    func_i = nib.load(str(run_path))
+    func_avg_i = nib.Nifti1Image(np.mean(func_i.get_data(), 3),
+                                 affine=func_i.affine, header=func_i.header)
+    res_func_i = ni.resample_img(func_avg_i, target_affine=temp_i.affine,
+                                 target_shape=temp_i.shape,
+                                 interpolation='nearest')
+
+    func_mask_i = nib.load(str(run_mask_path))
+    func_mask_temp_i = nib.Nifti1Image(func_mask_i.get_data().astype(np.int),
+                                       affine=func_mask_i.affine,header=func_mask_i.header)
+    func_mask_i = ni.resample_img(func_mask_temp_i,
+                                  target_affine=temp_i.affine,
+                                  target_shape=temp_i.shape,
+                                  interpolation='nearest')
+
+    run_avg = res_func_i.get_data()
+    run_mask = func_mask_i.get_data().astype(int)
+
+    # Make the standard space figure
+    target_figure(run_path, standard_target_path)
+    # Make the native figures
+    target_figure(str(run_raw_path), native_target_path)
+
+    return (run_avg, run_mask)
+
+
 def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
+    # TODO: make list of files to be created, check against existing files
+    # TODO: every run level process is run in parallel
+
     if not type(report_p) == pal.Path:
         report_p = pal.Path(report_p)
     if not type(raw_p) == pal.Path:
         raw_p = pal.Path(raw_p)
 
-    # Leave some room to breathe, if we can
+    # Leave some room to breathe for the sequential process, if we can
     if n_cpu > 1:
         n_cpu -= 1
     elif n_cpu < 1:
@@ -395,7 +429,9 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
         raise Exception('There are no subjects remaining for which I could '
                         'generate a dashboard. Please check your paths! '
                         'Exiting')
+    n_subjects = len(subjects)
     runs = find_runs(prep_p, subjects)
+    n_runs = len(runs)
     # Generate the run and subject files
     subjects_str = make_str(var_name='listSubject', items=subjects)
     save_js(subjects_str, str(report_p / data_structure['listSubject']))
@@ -422,78 +458,54 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
                                          'VOL_OK', 'VOL_scrubbed']}
     # Build the joblist for the motion figure which takes up most of the time
     motion_joblist = list()
+    run_joblist = list()
     for rid, run in enumerate(runs):
-        run_level['Run'].append(run)
-        run_name = re.search(r'.*(?=_space-MNI152NLin2009cAsym_preproc)',
-                             run).group()
-        sub_name = re.search(r'.*(?=_task)', run_name).group()
-        run_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(run)
-        # Reconstruct the name of the original run
-        run_raw_path = raw_p / sub_site_matching[sub_name] / sub_name /\
-                       'func' / '{}.nii.gz'.format(run_name)
-        # Setup the native figures
-        motion_joblist.append((str(run_raw_path), report_p /
-                      data_structure['fig_native_motion'].format(run)))
-        # Make the standard space figure
-        motion_joblist.append((str(run_path), report_p /
-                      data_structure['fig_standard_motion'].format(run)))
-    # Spawn the workers for the motion figures
-    pool = mp.Pool(processes=n_cpu)
-    res_pool = pool.starmap_async(motion_figure, motion_joblist)
-    start_movies = time.time()
-
-    for rid, run in enumerate(runs):
-        run_start = time.time()
-        run_level['Run'].append(run)
+        # Define names
         run_name = re.search(r'.*(?=_space-MNI152NLin2009cAsym_preproc)',
                              run).group()
         sub_name = re.search(r'.*(?=_task)', run_name).group()
 
+        # Define paths
         run_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(run)
-        run_mask_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(
-            re.sub('_preproc', '_brainmask', run))
-        # Group mask - we are resampling here because not all EPI sequences
-        # necessarily have the same acquisition matrix
-        func_i = nib.load(str(run_path))
-        func_avg_i = nib.Nifti1Image(np.mean(func_i.get_data(), 3),
-                                     affine=func_i.affine, header=func_i.header)
-        res_func_i = ni.resample_img(func_avg_i, target_affine=temp_i.affine,
-                                     target_shape=temp_i.shape,
-                                     interpolation='nearest')
+        run_mask_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(re.sub('_preproc', '_brainmask', run))
+        confound_path = prep_p / sub_name / 'func' / '{}_confounds.tsv'.format(run_name)
+        run_raw_path = raw_p / sub_site_matching[sub_name] / sub_name / 'func' / '{}.nii.gz'.format(run_name)
+        native_target_path = report_p / data_structure['fig_native_target'].format(run)
+        standard_target_path = report_p / data_structure['fig_standard_target'].format(run)
+        native_motion_path = report_p / data_structure['fig_native_motion'].format(run)
+        standard_motion_path = report_p / data_structure['fig_standard_motion'].format(run)
 
-        func_mask_i = nib.load(str(run_mask_path))
-        func_mask_temp_i = nib.Nifti1Image(
-            func_mask_i.get_data().astype(np.int), affine=func_mask_i.affine,
-            header=func_mask_i.header)
-        func_mask_i = ni.resample_img(func_mask_temp_i,
-                                      target_affine=temp_i.affine,
-                                      target_shape=temp_i.shape,
-                                      interpolation='nearest')
-
-        run_avg = res_func_i.get_data()
-        run_mask = func_mask_i.get_data().astype(int)
-        if rid == 0:
-            group_sum = np.zeros(temp_i.shape)
-            mask_sum = np.zeros(temp_i.shape)
-        group_sum += run_avg
-        mask_sum += run_mask
-
-        n_t = nib.load(str(run_path)).shape[3]
-        confound_path = prep_p / sub_name / 'func' / '{}_confounds.tsv'.format(
-            run_name)
-        # Reconstruct the name of the original run
-        run_raw_path = raw_p / sub_site_matching[sub_name] / sub_name / \
-                       'func' / '{}.nii.gz'.format(run_name)
+        # Check if the run is there
         if not run_path.exists():
             print(' is missing'.format(run_raw_path))
-        # Make the native figures
-        target_figure(str(run_raw_path),
-                      report_p /
-                      data_structure['fig_native_target'].format(run))
-        # Make the standard space figure
-        target_figure(str(run_path),
-                      report_p / data_structure['fig_standard_target'].format(
-                          run))
+
+        # Setup the target figures
+        run_joblist.append((run_path, run_raw_path,
+                            standard_target_path, native_target_path,
+                            run_mask_path, confound_path, temp_i))
+
+        # Set up the motion figures
+        motion_joblist.append((run_path, standard_motion_path))
+        motion_joblist.append((run_raw_path, native_motion_path))
+
+    # Spawn the workers for the motion figures
+    pool = mp.Pool(processes=n_cpu)
+    motion_pool = pool.starmap_async(motion_figure, motion_joblist)
+    run_pool = pool.starmap_async(_run_wrapper, run_joblist)
+    start_movies = time.time()
+
+    # Do it again, only for the strings because they are fast
+    for rid, run in enumerate(runs):
+        run_level['Run'].append(run)
+        # Define names
+        run_name = re.search(r'.*(?=_space-MNI152NLin2009cAsym_preproc)',
+                             run).group()
+        sub_name = re.search(r'.*(?=_task)', run_name).group()
+
+        # Define paths
+        run_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(run)
+        confound_path = prep_p / sub_name / 'func' / '{}_confounds.tsv'.format(
+            run_name)
 
         # Make the dataMotion file
         data_motion_str, scrub_mask, fd = make_motion_str(str(confound_path))
@@ -503,11 +515,7 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
         run_level['VOL_scrubbed'].append(str(np.sum(scrub_mask)))
         save_js(data_motion_str, str(report_p /
                                      data_structure['run_motion'].format(run)))
-        print(
-            'Run {}/{} done. Took {:.2f}s. {} #ts: {}'.format(rid + 1,
-                                                              len(runs),
-                                                        time.time() - run_start,
-                                                              n_t, run))
+
     # Make the FD file
     fd_str = make_named_str('dataFD', ('Run', run_level['Run']),
                             ('FD_before', run_level['FD_before']),
@@ -517,29 +525,6 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
                             ('vol_ok', run_level['VOL_OK']))
     fd_str = '\n'.join([fd_str, nb_str])
     save_js(fd_str, str(report_p / data_structure['fd']))
-
-    # Make group level figures
-    group_avg = group_sum / (rid + 1)
-    group_avg_lower_cutoff = np.percentile(group_avg, 1)
-    group_avg_i = nib.Nifti1Image(group_avg, affine=temp_i.affine,
-                                  header=temp_i.header)
-    mask_avg = mask_sum / (rid + 1)
-    mask_avg_i = nib.Nifti1Image(mask_avg, affine=temp_i.affine,
-                                 header=temp_i.header)
-    group_mask = mask_avg > 0.95
-    group_mask_i = nib.Nifti1Image(group_mask, affine=temp_i.affine,
-                                   header=temp_i.header)
-
-    f_group_avg = make_reg_func_figure(group_avg_i, vmin=group_avg_lower_cutoff)
-    f_group_mask_avg = make_reg_func_figure(mask_avg_i)
-    f_group_mask = make_reg_func_figure(group_mask_i, vmin=0)
-
-    f_group_avg.savefig(report_p / data_structure['fig_group_EPI_avg'], dpi=200)
-    f_group_mask_avg.savefig(
-        report_p / data_structure['fig_group_EPI_mask_avg'],
-        dpi=200)
-    f_group_mask.savefig(report_p / data_structure['fig_group_EPI_mask'],
-                         dpi=200)
 
     # Files created once per subject
     sub_level = {var: list() for var in ['Sub', 'T1_over', 'T1_corr',
@@ -652,27 +637,73 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
     save_js(chart_t1_str, str(report_p / data_structure['chartT1']))
 
     # Make sure the motion figures are done:
-    if not res_pool.ready():
+    if not motion_pool.ready() or not run_pool.ready():
         print('Almost done, we are currently waiting for the scanner time '
               'series movies to render. This can take a long time. If you '
               'want to speed up this process, increase the number of CPUs with '
               'n_cpu.')
-
+    n_jobs = len(motion_joblist) + len(run_joblist)
+    # Wait for the parallel jobs to finish
     while True:
-        if not res_pool.ready():
-            sys.stdout.write('\rMovies have been rendering for {:.2f}s'.format(
-                time.time() - start_movies))
+        if not motion_pool.ready() or not run_pool.ready():
+            remaining = motion_pool._number_left + run_pool._number_left
+            elapsed = time.time() - start_movies
+            average_time = elapsed/(n_jobs-remaining)
+            sys.stdout.write('\rWaiting for {}/{} jobs to finish since {:.2f}s. '
+                            'Average time per job so far is {:.2f}s'.format(remaining, n_jobs, elapsed, average_time))
             sys.stdout.flush()
             time.sleep(5)
         else:
-            if res_pool.successful():
-                print('\nAll rendering jobs have completed. Checking if they '
-                      'were successful.')
+            # Check the movies first
+            print('\nAll in scanner movies have completed. Checking if they were successful.')
             # Get the returns to possibly raise an exception here.
-            r = res_pool.get()
+            _ = motion_pool.get()
+
+            # Check the run level data
+            print('\nAll level jobs were completed. Collecting data.')
+            run_list = run_pool.get()
             break
-    print('\n\n All complete. Check out your report at {}.'
-          '\nGoodbye'.format(report_p))
+
+    # Build the group level figures that depend on the run outputs
+    for rid, (run_avg, run_mask) in enumerate(run_list):
+        if rid == 0:
+            group_sum = np.zeros(temp_i.shape)
+            mask_sum = np.zeros(temp_i.shape)
+        group_sum += run_avg
+        mask_sum += run_mask
+
+    print('All data collected, generate group level figures.')
+
+    # Make group level figures
+    group_avg = group_sum / n_runs
+    group_avg_lower_cutoff = np.percentile(group_avg, 1)
+    group_avg_i = nib.Nifti1Image(group_avg, affine=temp_i.affine,
+                                  header=temp_i.header)
+    mask_avg = mask_sum / n_runs
+    mask_avg_i = nib.Nifti1Image(mask_avg, affine=temp_i.affine,
+                                 header=temp_i.header)
+    group_mask = mask_avg > 0.95
+    group_mask_i = nib.Nifti1Image(group_mask, affine=temp_i.affine,
+                                   header=temp_i.header)
+
+    f_group_avg = make_reg_func_figure(group_avg_i, vmin=group_avg_lower_cutoff)
+    f_group_mask_avg = make_reg_func_figure(mask_avg_i)
+    f_group_mask = make_reg_func_figure(group_mask_i, vmin=0)
+
+    f_group_avg.savefig(report_p / data_structure['fig_group_EPI_avg'], dpi=200)
+    f_group_mask_avg.savefig(
+        report_p / data_structure['fig_group_EPI_mask_avg'],
+        dpi=200)
+    f_group_mask.savefig(report_p / data_structure['fig_group_EPI_mask'],
+                         dpi=200)
+
+    print('\nEverything is done. Check out your report at {}. Goodbye.'.format(report_p))
+
+
+
+
+
+
     return 'OK'
 
 
