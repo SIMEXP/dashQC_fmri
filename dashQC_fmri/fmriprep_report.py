@@ -650,8 +650,8 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
     # Make sure the motion figures are done:
     if not res_pool.ready():
         print('Almost done, we are currently waiting for the scanner time '
-              'series movies to render. This can take a long time. If you'
-              'want to speed up this process, increase the number of CPUs with'
+              'series movies to render. This can take a long time. If you '
+              'want to speed up this process, increase the number of CPUs with '
               'n_cpu.')
 
     while True:
