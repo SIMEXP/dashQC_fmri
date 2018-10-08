@@ -362,6 +362,29 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
     populate_report(report_p)
 
     subjects = find_subjects(prep_p)
+    # See if we can find the raw data for these subjects
+    sub_site_matching = {sub: '' for sub in subjects}
+    missing_raw_subs = list()
+    if not list(raw_p.glob('sub*')):
+        # No subjects at this level, probably sites
+        for subject in subjects:
+            raw_sub_matches = list(raw_p.glob('*/{}'.format(subject)))
+            if raw_sub_matches:
+                sub_site_matching[subject] = raw_sub_matches[0].parent.name
+            else:
+                missing_raw_subs.append(subject)
+        if missing_raw_subs:
+            # At least one individual is missing
+            warnings.warn('I couldn\'t find raw data at {} for the following '
+                          'subjects: \n    {}\nI will remove them from the '
+                          'dashboard'.format(raw_p,
+                                             '\n    '.join(missing_raw_subs)))
+            for subject in missing_raw_subs:
+                subjects.remove(subject)
+    if not subjects:
+        raise Exception('There are no subjects remaining for which I could '
+                        'generate a dashboard. Please check your paths! '
+                        'Exiting')
     runs = find_runs(prep_p, subjects)
     # Generate the run and subject files
     subjects_str = make_str(var_name='listSubject', items=subjects)
@@ -396,7 +419,8 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
         sub_name = re.search(r'.*(?=_task)', run_name).group()
         run_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(run)
         # Reconstruct the name of the original run
-        run_raw_path = raw_p / sub_name / 'func' / '{}.nii.gz'.format(run_name)
+        run_raw_path = raw_p / sub_site_matching[sub_name] / sub_name /\
+                       'func' / '{}.nii.gz'.format(run_name)
         # Setup the native figures
         motion_joblist.append((str(run_raw_path), report_p /
                       data_structure['fig_native_motion'].format(run)))
@@ -448,7 +472,8 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
         confound_path = prep_p / sub_name / 'func' / '{}_confounds.tsv'.format(
             run_name)
         # Reconstruct the name of the original run
-        run_raw_path = raw_p / sub_name / 'func' / '{}.nii.gz'.format(run_name)
+        run_raw_path = raw_p / sub_site_matching[sub_name] / sub_name / \
+                       'func' / '{}.nii.gz'.format(run_name)
         if not run_path.exists():
             print(' is missing'.format(run_raw_path))
         # Make the native figures
