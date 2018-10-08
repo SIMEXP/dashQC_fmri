@@ -494,8 +494,8 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
         # Make the dataMotion file
         data_motion_str, scrub_mask, fd = make_motion_str(str(confound_path))
         run_level['FD_before'].append(str(np.nanmean(fd)))
-        run_level['FD_after'].append(str(np.nanmean(fd[~scrub_mask])))
-        run_level['VOL_OK'].append(str(np.sum(~scrub_mask)))
+        run_level['FD_after'].append(str(np.nanmean(fd[scrub_mask != 1])))
+        run_level['VOL_OK'].append(str(np.sum(scrub_mask != 1)))
         run_level['VOL_scrubbed'].append(str(np.sum(scrub_mask)))
         save_js(data_motion_str, str(report_p /
                                      data_structure['run_motion'].format(run)))
