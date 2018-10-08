@@ -379,6 +379,110 @@ def make_report(prep_p, report_p, raw_p):
     temp_data = temp_i.get_data()
     temp_mask = nib.load(str(mask_p)).get_data().astype(bool)
 
+    # Files generated once per run
+    # TODO find a better way to get the scrub mask than from the string generator
+    run_level = {var: list() for var in ['Run', 'FD_before', 'FD_after',
+                                         'VOL_OK', 'VOL_scrubbed']}
+    for rid, run in enumerate(runs):
+        run_start = time.time()
+        run_level['Run'].append(run)
+        run_name = re.search(r'.*(?=_space-MNI152NLin2009cAsym_preproc)',
+                             run).group()
+        sub_name = re.search(r'.*(?=_task)', run_name).group()
+
+        run_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(run)
+        run_mask_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(
+            re.sub('_preproc', '_brainmask', run))
+        # Group mask - we are resampling here because not all EPI sequences necessarily have the same acquisition matrix
+        func_i = nib.load(str(run_path))
+        func_avg_i = nib.Nifti1Image(np.mean(func_i.get_data(), 3),
+                                     affine=func_i.affine, header=func_i.header)
+        res_func_i = ni.resample_img(func_avg_i, target_affine=temp_i.affine,
+                                     target_shape=temp_i.shape,
+                                     interpolation='nearest')
+
+        func_mask_i = nib.load(str(run_mask_path))
+        func_mask_temp_i = nib.Nifti1Image(
+            func_mask_i.get_data().astype(np.int), affine=func_mask_i.affine,
+            header=func_mask_i.header)
+        func_mask_i = ni.resample_img(func_mask_temp_i,
+                                      target_affine=temp_i.affine,
+                                      target_shape=temp_i.shape,
+                                      interpolation='nearest')
+
+        run_avg = res_func_i.get_data()
+        run_mask = func_mask_i.get_data().astype(int)
+        if rid == 0:
+            group_sum = np.zeros(temp_i.shape)
+            mask_sum = np.zeros(temp_i.shape)
+        group_sum += run_avg
+        mask_sum += run_mask
+
+        n_t = nib.load(str(run_path)).shape[3]
+        confound_path = prep_p / sub_name / 'func' / '{}_confounds.tsv'.format(
+            run_name)
+        # Reconstruct the name of the original run
+        run_raw_path = raw_p / sub_name / 'func' / '{}.nii.gz'.format(run_name)
+        if not run_path.exists():
+            print(' is missing'.format(run_raw_path))
+        # Make the native figures
+        target_figure(str(run_raw_path),
+                      report_p /
+                      data_structure['fig_native_target'].format(run))
+        motion_figure(str(run_raw_path), report_p /
+                      data_structure['fig_native_motion'].format(run))
+        # Make the standard space figure
+        target_figure(str(run_path),
+                      report_p / data_structure['fig_standard_target'].format(
+                          run))
+        motion_figure(str(run_path), report_p /
+                      data_structure['fig_standard_motion'].format(run))
+
+        # Make the dataMotion file
+        data_motion_str, scrub_mask, fd = make_motion_str(str(confound_path))
+        run_level['FD_before'].append(str(np.nanmean(fd)))
+        run_level['FD_after'].append(str(np.nanmean(fd[~scrub_mask])))
+        run_level['VOL_OK'].append(str(np.sum(~scrub_mask)))
+        run_level['VOL_scrubbed'].append(str(np.sum(scrub_mask)))
+        save_js(data_motion_str, str(report_p /
+                                     data_structure['run_motion'].format(run)))
+        print(
+            'Run {}/{} done. Took {:.2f}s. {} ts: {}'.format(rid + 1, len(runs),
+                                                             time.time() - run_start,
+                                                             n_t, run))
+    # Make the FD file
+    fd_str = make_named_str('dataFD', ('Run', run_level['Run']),
+                            ('FD_before', run_level['FD_before']),
+                            ('FD_after', run_level['FD_after']))
+    nb_str = make_named_str('dataNbVol', ('Run', run_level['Run']),
+                            ('vol_scrubbed', run_level['VOL_scrubbed']),
+                            ('vol_ok', run_level['VOL_OK']))
+    fd_str = '\n'.join([fd_str, nb_str])
+    save_js(fd_str, str(report_p / data_structure['fd']))
+
+    # Make group level figures
+    group_avg = group_sum / (rid + 1)
+    group_avg_lower_cutoff = np.percentile(group_avg, 1)
+    group_avg_i = nib.Nifti1Image(group_avg, affine=temp_i.affine,
+                                  header=temp_i.header)
+    mask_avg = mask_sum / (rid + 1)
+    mask_avg_i = nib.Nifti1Image(mask_avg, affine=temp_i.affine,
+                                 header=temp_i.header)
+    group_mask = mask_avg > 0.95
+    group_mask_i = nib.Nifti1Image(group_mask, affine=temp_i.affine,
+                                   header=temp_i.header)
+
+    f_group_avg = make_reg_func_figure(group_avg_i, vmin=group_avg_lower_cutoff)
+    f_group_mask_avg = make_reg_func_figure(mask_avg_i)
+    f_group_mask = make_reg_func_figure(group_mask_i, vmin=0)
+
+    f_group_avg.savefig(report_p / data_structure['fig_group_EPI_avg'], dpi=200)
+    f_group_mask_avg.savefig(
+        report_p / data_structure['fig_group_EPI_mask_avg'],
+        dpi=200)
+    f_group_mask.savefig(report_p / data_structure['fig_group_EPI_mask'],
+                         dpi=200)
+
     # Files created once per subject
     sub_level = {var: list() for var in ['Sub', 'T1_over', 'T1_corr',
                                          'EPI_over', 'EPI_corr']}
@@ -488,109 +592,6 @@ def make_report(prep_p, report_p, raw_p):
                                     ('overlap_brain', sub_level['T1_over']))
     chart_t1_str = '\n'.join([t1_str, t1_overlap_str])
     save_js(chart_t1_str, str(report_p / data_structure['chartT1']))
-
-    # Files generated once per run
-    # TODO find a better way to get the scrub mask than from the string generator
-    run_level = {var: list() for var in ['Run', 'FD_before', 'FD_after',
-                                         'VOL_OK', 'VOL_scrubbed']}
-    for rid, run in enumerate(runs):
-        run_start = time.time()
-        run_level['Run'].append(run)
-        run_name = re.search(r'.*(?=_space-MNI152NLin2009cAsym_preproc)',
-                             run).group()
-        sub_name = re.search(r'.*(?=_task)', run_name).group()
-
-        run_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(run)
-        run_mask_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(
-            re.sub('_preproc', '_brainmask', run))
-        # Group mask - we are resampling here because not all EPI sequences necessarily have the same acquisition matrix
-        func_i = nib.load(str(run_path))
-        func_avg_i = nib.Nifti1Image(np.mean(func_i.get_data(), 3),
-                                     affine=func_i.affine, header=func_i.header)
-        res_func_i = ni.resample_img(func_avg_i, target_affine=temp_i.affine,
-                                     target_shape=temp_i.shape,
-                                     interpolation='nearest')
-
-        func_mask_i = nib.load(str(run_mask_path))
-        func_mask_temp_i = nib.Nifti1Image(
-            func_mask_i.get_data().astype(np.int), affine=func_mask_i.affine,
-            header=func_mask_i.header)
-        func_mask_i = ni.resample_img(func_mask_temp_i,
-                                      target_affine=temp_i.affine,
-                                      target_shape=temp_i.shape,
-                                      interpolation='nearest')
-
-        run_avg = res_func_i.get_data()
-        run_mask = func_mask_i.get_data().astype(int)
-        if rid == 0:
-            group_sum = np.zeros(temp_i.shape)
-            mask_sum = np.zeros(temp_i.shape)
-        group_sum += run_avg
-        mask_sum += run_mask
-
-        n_t = nib.load(str(run_path)).shape[3]
-        confound_path = prep_p / sub_name / 'func' / '{}_confounds.tsv'.format(
-            run_name)
-        # Reconstruct the name of the original run
-        run_raw_path = raw_p / sub_name / 'func' / '{}.nii.gz'.format(run_name)
-        if not run_path.exists():
-            print(' is missing'.format(run_raw_path))
-        # Make the native figures
-        target_figure(str(run_raw_path),
-                      report_p /
-                      data_structure['fig_native_target'].format(run))
-        motion_figure(str(run_raw_path), report_p /
-                      data_structure['fig_native_motion'].format(run))
-        # Make the standard space figure
-        target_figure(str(run_path),
-                      report_p / data_structure['fig_standard_target'].format(
-                          run))
-        motion_figure(str(run_path), report_p /
-                      data_structure['fig_standard_motion'].format(run))
-
-        # Make the dataMotion file
-        data_motion_str, scrub_mask, fd = make_motion_str(str(confound_path))
-        run_level['FD_before'].append(str(np.nanmean(fd)))
-        run_level['FD_after'].append(str(np.nanmean(fd[~scrub_mask])))
-        run_level['VOL_OK'].append(str(np.sum(~scrub_mask)))
-        run_level['VOL_scrubbed'].append(str(np.sum(scrub_mask)))
-        save_js(data_motion_str, str(report_p /
-                                     data_structure['run_motion'].format(run)))
-        print(
-            'Run {}/{} done. Took {:.2f}s. {} ts: {}'.format(rid + 1, len(runs),
-                                                             time.time() - run_start,
-                                                             n_t, run))
-    # Make the FD file
-    fd_str = make_named_str('dataFD', ('Run', run_level['Run']),
-                            ('FD_before', run_level['FD_before']),
-                            ('FD_after', run_level['FD_after']))
-    nb_str = make_named_str('dataNbVol', ('Run', run_level['Run']),
-                            ('vol_scrubbed', run_level['VOL_scrubbed']),
-                            ('vol_ok', run_level['VOL_OK']))
-    fd_str = '\n'.join([fd_str, nb_str])
-    save_js(fd_str, str(report_p / data_structure['fd']))
-
-    # Make group level figures
-    group_avg = group_sum / (rid + 1)
-    group_avg_lower_cutoff = np.percentile(group_avg, 1)
-    group_avg_i = nib.Nifti1Image(group_avg, affine=temp_i.affine,
-                                  header=temp_i.header)
-    mask_avg = mask_sum / (rid + 1)
-    mask_avg_i = nib.Nifti1Image(mask_avg, affine=temp_i.affine,
-                                 header=temp_i.header)
-    group_mask = mask_avg > 0.95
-    group_mask_i = nib.Nifti1Image(group_mask, affine=temp_i.affine,
-                                   header=temp_i.header)
-
-    f_group_avg = make_reg_func_figure(group_avg_i, vmin=group_avg_lower_cutoff)
-    f_group_mask_avg = make_reg_func_figure(mask_avg_i)
-    f_group_mask = make_reg_func_figure(group_mask_i, vmin=0)
-
-    f_group_avg.savefig(report_p / data_structure['fig_group_EPI_avg'], dpi=200)
-    f_group_mask_avg.savefig(report_p / data_structure['fig_group_EPI_mask_avg'],
-                             dpi=200)
-    f_group_mask.savefig(report_p / data_structure['fig_group_EPI_mask'],
-                         dpi=200)
     return 'OK'
 
 
