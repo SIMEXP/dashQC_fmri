@@ -327,6 +327,12 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
     if not type(raw_p) == pal.Path:
         raw_p = pal.Path(raw_p)
 
+    # Leave some room to breathe, if we can
+    if n_cpu > 1:
+        n_cpu -= 1
+    elif n_cpu < 1:
+        n_cpu = 1
+
     # Find the repo path where the templates are
     repo_p = pal.Path(inspect.getfile(make_report)).parents[0].absolute()
 
