@@ -102,10 +102,7 @@ def make_report(preproc_dir, report_dir):
     # summary/*.js -> assets/summary/js
     copy_all_files(preproc_dir + "summary{0}*.js".format(os.sep),
                    report_dir + "assets{0}summary{0}js".format(os.sep))
-
-    # (3) Remove motion.html from assets/motion/html
-    print("Removing old motion files...")
-    os.remove(report_dir + "assets{0}motion{0}html{0}motion.html".format(os.sep))
+    
     print("Conversion complete.")
 
 
