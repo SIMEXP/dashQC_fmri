@@ -326,8 +326,7 @@ def save_json(d, path):
 
 
 def _run_wrapper(run_path, run_raw_path, standard_target_path, native_target_path,
-                 run_mask_path, confound_path, temp_i):
-
+                 run_mask_path, temp_i):
     # Group mask - we are resampling here because not all EPI sequences
     # necessarily have the same acquisition matrix
     func_i = nib.load(str(run_path))
@@ -339,7 +338,7 @@ def _run_wrapper(run_path, run_raw_path, standard_target_path, native_target_pat
 
     func_mask_i = nib.load(str(run_mask_path))
     func_mask_temp_i = nib.Nifti1Image(func_mask_i.get_data().astype(np.int),
-                                       affine=func_mask_i.affine,header=func_mask_i.header)
+                                       affine=func_mask_i.affine, header=func_mask_i.header)
     func_mask_i = ni.resample_img(func_mask_temp_i,
                                   target_affine=temp_i.affine,
                                   target_shape=temp_i.shape,
@@ -353,7 +352,7 @@ def _run_wrapper(run_path, run_raw_path, standard_target_path, native_target_pat
     # Make the native figures
     target_figure(str(run_raw_path), native_target_path)
 
-    return (run_avg, run_mask)
+    return run_avg, run_mask
 
 
 def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
@@ -468,7 +467,6 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
         # Define paths
         run_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(run)
         run_mask_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(re.sub('_preproc', '_brainmask', run))
-        confound_path = prep_p / sub_name / 'func' / '{}_confounds.tsv'.format(run_name)
         run_raw_path = raw_p / sub_site_matching[sub_name] / sub_name / 'func' / '{}.nii.gz'.format(run_name)
         native_target_path = report_p / data_structure['fig_native_target'].format(run)
         standard_target_path = report_p / data_structure['fig_standard_target'].format(run)
@@ -482,7 +480,7 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
         # Setup the target figures
         run_joblist.append((run_path, run_raw_path,
                             standard_target_path, native_target_path,
-                            run_mask_path, confound_path, temp_i))
+                            run_mask_path, temp_i))
 
         # Set up the motion figures
         motion_joblist.append((run_path, standard_motion_path))
@@ -501,11 +499,8 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
         run_name = re.search(r'.*(?=_space-MNI152NLin2009cAsym_preproc)',
                              run).group()
         sub_name = re.search(r'.*(?=_task)', run_name).group()
-
         # Define paths
-        run_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(run)
-        confound_path = prep_p / sub_name / 'func' / '{}_confounds.tsv'.format(
-            run_name)
+        confound_path = prep_p / sub_name / 'func' / '{}_confounds.tsv'.format(run_name)
 
         # Make the dataMotion file
         data_motion_str, scrub_mask, fd = make_motion_str(str(confound_path))
@@ -650,7 +645,7 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
             elapsed = time.time() - start_movies
             average_time = elapsed/(n_jobs-remaining)
             sys.stdout.write('\rWaiting for {}/{} jobs to finish since {:.2f}s. '
-                            'Average time per job so far is {:.2f}s'.format(remaining, n_jobs, elapsed, average_time))
+                             'Average time per job so far is {:.2f}s'.format(remaining, n_jobs, elapsed, average_time))
             sys.stdout.flush()
             time.sleep(5)
         else:
@@ -698,11 +693,6 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
                          dpi=200)
 
     print('\nEverything is done. Check out your report at {}. Goodbye.'.format(report_p))
-
-
-
-
-
 
     return 'OK'
 
