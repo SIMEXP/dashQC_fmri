@@ -712,4 +712,4 @@ if __name__ == "__main__":
     make_report(pal.Path(args.preproc_dir),
                 pal.Path(args.report_dir),
                 pal.Path(args.raw_dir),
-                parser.number_of_cpus)
+                args.number_of_cpus)
