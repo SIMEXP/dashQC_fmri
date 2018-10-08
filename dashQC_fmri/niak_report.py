@@ -18,6 +18,8 @@ copy_debug = False
 
 
 def populate_report(report_p):
+    if not type(report_p) == pal.Path:
+        report_p = pal.Path(report_p)
     # Copy the template into the report folder
     repo_p = pal.Path(inspect.getfile(make_report)).parents[0].absolute()
     dir_util.copy_tree(str(repo_p / 'data/report'), str(report_p), verbose=0)
