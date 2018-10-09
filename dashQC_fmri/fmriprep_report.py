@@ -69,14 +69,13 @@ def find_data(preproc_p, raw_p):
         # Check the subject level data for availability
         anat_d = preproc_p / subject / 'anat'
         func_d = preproc_p / subject / 'func'
-        func_ref_p = list(func_d.glob('{}*MNI152NLin2009cAsym_preproc.nii.gz'.format(subject)))[0]
-        func_mask_p = list(func_d.glob('{}*MNI152NLin2009cAsym_preproc_brainmask.nii.gz'.format(subject)))[0]
-        anat_p = list(anat_d.glob('{}*MNI152NLin2009cAsym_preproc.nii.gz'.format(subject)))[0]
-        anat_mask_p = list(anat_d.glob('{}*MNI152NLin2009cAsym_preproc.nii.gz'.format(subject)))[0]
+        func_ref_p = list(func_d.glob('{}*MNI152NLin2009cAsym_preproc.nii.gz'.format(subject)))
+        func_mask_p = list(func_d.glob('{}*MNI152NLin2009cAsym_preproc_brainmask.nii.gz'.format(subject)))
+        anat_p = list(anat_d.glob('{}*MNI152NLin2009cAsym_preproc.nii.gz'.format(subject)))
+        anat_mask_p = list(anat_d.glob('{}*MNI152NLin2009cAsym_preproc.nii.gz'.format(subject)))
         # Make sure all of these exist
-        if not any([p.exists() for p in [anat_d, func_d,
-                                         func_ref_p, func_mask_p,
-                                         anat_p, anat_mask_p]]):
+        if not all([p.exists() for p in [anat_d, func_d]]) or not all([func_ref_p, func_mask_p,
+                                                                       anat_p, anat_mask_p]):
             # This subject is no good because it doesn't have one of the crucial elements. We'll toss the entire file
             subjects_missing_preproc.append(subject)
             continue
