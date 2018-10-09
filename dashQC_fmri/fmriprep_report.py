@@ -620,17 +620,20 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
         # Sum individual T1
         anat_sum += anat
 
-        # Make the anat figure
-        f_anat = make_reg_anat_figure(str(anat_p), outline_p, draw_outline=True)
-        f_raw = make_reg_anat_figure(str(anat_p), outline_p, draw_outline=False)
-        f_anat.savefig(fig_anat_p, dpi=200)
-        plt.close(f_anat)
-        f_raw.savefig(fig_anat_raw_p, dpi=200)
-        plt.close(f_raw)
+        # Make the figures
+        if not fig_anat_p.exists():
+            f_anat = make_reg_anat_figure(str(anat_p), outline_p, draw_outline=True)
+            f_anat.savefig(fig_anat_p, dpi=200)
+            plt.close(f_anat)
+        if not fig_anat_raw_p.exists():
+            f_raw = make_reg_anat_figure(str(anat_p), outline_p, draw_outline=False)
+            f_raw.savefig(fig_anat_raw_p, dpi=200)
+            plt.close(f_raw)
         # Make the func figure
-        f_func = make_reg_func_figure(str(func_ref_p))
-        f_func.savefig(fig_func_p, dpi=200)
-        plt.close(f_func)
+        if not func_ref_p.exists():
+            f_func = make_reg_func_figure(str(func_ref_p))
+            f_func.savefig(fig_func_p, dpi=200)
+            plt.close(f_func)
         print('Subject {}/{} done. Took {:.2f}s.'.format(sid + 1, len(subjects),
                                                          time.time() - sub_start))
     # Make T1 average
