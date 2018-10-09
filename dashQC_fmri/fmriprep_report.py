@@ -404,9 +404,11 @@ def _run_wrapper(run_path, run_raw_path, standard_target_path, native_target_pat
     run_mask = func_mask_i.get_data().astype(int)
 
     # Make the standard space figure
-    target_figure(run_path, standard_target_path)
+    if not standard_target_path.exists():
+        target_figure(run_path, standard_target_path)
     # Make the native figures
-    target_figure(str(run_raw_path), native_target_path)
+    if not native_target_path.exists():
+        target_figure(str(run_raw_path), native_target_path)
 
     return run_avg, run_mask
 
@@ -503,18 +505,16 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
         native_motion_path = report_p / data_structure['fig_native_motion'].format(run)
         standard_motion_path = report_p / data_structure['fig_standard_motion'].format(run)
 
-        # Check if the run is there
-        if not run_path.exists():
-            print(' is missing'.format(run_raw_path))
-
         # Setup the target figures
         run_joblist.append((run_path, run_raw_path,
                             standard_target_path, native_target_path,
                             run_mask_path, temp_i))
 
         # Set up the motion figures
-        motion_joblist.append((run_path, standard_motion_path))
-        motion_joblist.append((run_raw_path, native_motion_path))
+        if not standard_motion_path.exists():
+            motion_joblist.append((run_path, standard_motion_path))
+        if not native_motion_path.exists():
+            motion_joblist.append((run_raw_path, native_motion_path))
 
     # Spawn the workers for the motion figures
     pool = mp.Pool(processes=n_cpu)
@@ -576,6 +576,11 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
         anat_mask_p = list(
             anat_d.glob('{}*MNI152NLin2009cAsym_brainmask.nii.gz'.format(sub)))[
             0]
+        # Define the names of the files to generate
+        fig_anat_p = report_p / data_structure['fig_anat'].format(sub)
+        fig_anat_raw_p = report_p / data_structure['fig_anat_raw'].format(sub)
+        fig_func_p = report_p / data_structure['fig_func'].format(sub)
+
 
         # Get reference data
         anat = nib.load(str(anat_p)).get_data()
@@ -618,16 +623,13 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
         # Make the anat figure
         f_anat = make_reg_anat_figure(str(anat_p), outline_p, draw_outline=True)
         f_raw = make_reg_anat_figure(str(anat_p), outline_p, draw_outline=False)
-        f_anat.savefig(report_p / data_structure['fig_anat'].format(sub),
-                       dpi=200)
+        f_anat.savefig(fig_anat_p, dpi=200)
         plt.close(f_anat)
-        f_raw.savefig(report_p / data_structure['fig_anat_raw'].format(sub),
-                      dpi=200)
+        f_raw.savefig(fig_anat_raw_p, dpi=200)
         plt.close(f_raw)
         # Make the func figure
         f_func = make_reg_func_figure(str(func_ref_p))
-        f_func.savefig(report_p / data_structure['fig_func'].format(sub),
-                       dpi=200)
+        f_func.savefig(fig_func_p, dpi=200)
         plt.close(f_func)
         print('Subject {}/{} done. Took {:.2f}s.'.format(sid + 1, len(subjects),
                                                          time.time() - sub_start))
