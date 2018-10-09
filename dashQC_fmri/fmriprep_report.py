@@ -35,29 +35,85 @@ warnings.filterwarnings('ignore')
 # TODO handle session data
 
 
-def find_subjects(path):
-    # TODO better type checking in the find functions
+def find_data(preproc_p, raw_p):
     # TODO work better with relative paths (e.g. more than one level)
-    if not type(path) == pal.PosixPath:
-        path = pal.Path(path)
-    subjects = [str(query.relative_to(path))
-                for query in path.glob('sub-*') if query.is_dir()]
-    return subjects
+    # Find the subjects in the preprocessing folder
+    if not type(preproc_p) == pal.PosixPath:
+        path = pal.Path(preproc_p)
+    subjects = [str(query.relative_to(preproc_p))
+                for query in preproc_p.glob('sub-*') if query.is_dir()]
+    # Find the subjects in the raw folder
+    sub_site_matching = {sub: '' for sub in subjects}
+    subjects_missing_raw = list()
+    if not list(raw_p.glob('sub*')):
+        # No subjects at this level, probably sites
+        for subject in subjects:
+            raw_sub_matches = list(raw_p.glob('*/{}'.format(subject)))
+            if raw_sub_matches:
+                sub_site_matching[subject] = raw_sub_matches[0].parent.name
+            else:
+                subjects_missing_raw.append(subject)
+    if subjects_missing_raw:
+        # At least one individual is missing
+        warnings.warn('I couldn\'t find raw data at {} for the following '
+                      'subjects: \n    {}\nI will remove them from the '
+                      'report'.format(raw_p,
+                                         '\n    '.join(subjects_missing_raw)))
+        for subject in subjects_missing_raw:
+            subjects.remove(subject)
 
-
-def find_runs(path, subjects):
-    # TODO better type checking in the find functions
-    if not type(path) == pal.PosixPath:
-        path = pal.Path(path)
+    # Check availability of the preprocessed data
+    subjects_missing_preproc = list()
     runs = list()
-    for sub in subjects:
-        lookup_path = path / sub / 'func'
-        query = lookup_path.glob('*run-*preproc.nii.gz')
+    for subject in subjects:
+        # Check the subject level data for availability
+        anat_d = preproc_p / subject / 'anat'
+        func_d = preproc_p / subject / 'func'
+        func_ref_p = list(func_d.glob('{}*MNI152NLin2009cAsym_preproc.nii.gz'.format(subject)))[0]
+        func_mask_p = list(func_d.glob('{}*MNI152NLin2009cAsym_preproc_brainmask.nii.gz'.format(subject)))[0]
+        anat_p = list(anat_d.glob('{}*MNI152NLin2009cAsym_preproc.nii.gz'.format(subject)))[0]
+        anat_mask_p = list(anat_d.glob('{}*MNI152NLin2009cAsym_preproc.nii.gz'.format(subject)))[0]
+        # Make sure all of these exist
+        if not any([p.exists() for p in [anat_d, func_d,
+                                         func_ref_p, func_mask_p,
+                                         anat_p, anat_mask_p]]):
+            # This subject is no good because it doesn't have one of the crucial elements. We'll toss the entire file
+            subjects_missing_preproc.append(subject)
+            continue
+
+        # Now let's see if there are multiple runs
+        runs_missing_data = list()
+        query = func_d.glob('*run-*preproc.nii.gz')
         if query:
             for item in query:
-                name = str(item.name).split('.')[0]
-                runs.append(name)
-    return runs
+                run = str(item.name).split('.')[0]
+                run_name = re.search(r'.*(?=_space-MNI152NLin2009cAsym_preproc)',
+                                     run).group()
+                # Check if the expected files are here
+                run_p = func_d / '{}.nii.gz'.format(run)
+                run_mask_p = func_d / '{}.nii.gz'.format(re.sub('_preproc', '_brainmask', run))
+                confound_p = func_d / '{}_confounds.tsv'.format(run_name)
+                run_raw_p = raw_p / sub_site_matching[subject] / subject / 'func' / '{}.nii.gz'.format(run_name)
+                if not all([p.exists() for p in [run_p, run_mask_p, confound_p, run_raw_p]]):
+                    # This run doesn't have all available data
+                    runs_missing_data.append(run)
+                    continue
+                runs.append(run_name)
+            if runs_missing_data:
+                # At least one individual is missing
+                warnings.warn('    Subject {} has {} runs with missing data:\n'
+                              '        {}\n'
+                              '    They will not be included'
+                              ' in the report.'.format(subject, len(runs_missing_data),
+                                                       '\n        '.join(runs_missing_data)))
+
+    if not subjects:
+        raise Exception('There are no subjects remaining for which I could '
+                        'generate a dashboard. Please check your paths! '
+                        'preproc_path: {}\n'
+                        'raw_path: {}\nExiting'.format(preproc_p, raw_p))
+
+    return subjects, runs, sub_site_matching
 
 
 def populate_report(report_p):
@@ -403,33 +459,7 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
                       }
 
     populate_report(report_p)
-
-    subjects = find_subjects(prep_p)
-    # See if we can find the raw data for these subjects
-    sub_site_matching = {sub: '' for sub in subjects}
-    missing_raw_subs = list()
-    if not list(raw_p.glob('sub*')):
-        # No subjects at this level, probably sites
-        for subject in subjects:
-            raw_sub_matches = list(raw_p.glob('*/{}'.format(subject)))
-            if raw_sub_matches:
-                sub_site_matching[subject] = raw_sub_matches[0].parent.name
-            else:
-                missing_raw_subs.append(subject)
-        if missing_raw_subs:
-            # At least one individual is missing
-            warnings.warn('I couldn\'t find raw data at {} for the following '
-                          'subjects: \n    {}\nI will remove them from the '
-                          'dashboard'.format(raw_p,
-                                             '\n    '.join(missing_raw_subs)))
-            for subject in missing_raw_subs:
-                subjects.remove(subject)
-    if not subjects:
-        raise Exception('There are no subjects remaining for which I could '
-                        'generate a dashboard. Please check your paths! '
-                        'Exiting')
-    n_subjects = len(subjects)
-    runs = find_runs(prep_p, subjects)
+    subjects, runs, sub_site_matching = find_data(prep_p, raw_p)
     n_runs = len(runs)
     # Generate the run and subject files
     subjects_str = make_str(var_name='listSubject', items=subjects)
