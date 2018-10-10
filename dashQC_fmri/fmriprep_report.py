@@ -467,6 +467,7 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
 
     populate_report(report_p)
     subjects, runs, sub_site_matching = find_data(prep_p, raw_p)
+    print('I found {} subjects and {} subject runs to process.'.format(len(subjects), len(runs)))
     n_runs = len(runs)
     # Generate the run and subject files
     subjects_str = make_str(var_name='listSubject', items=subjects)
