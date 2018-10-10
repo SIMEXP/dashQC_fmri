@@ -97,7 +97,7 @@ def find_data(preproc_p, raw_p):
                     # This run doesn't have all available data
                     runs_missing_data.append(run)
                     continue
-                runs.append(run_name)
+                runs.append(run)
             if runs_missing_data:
                 # At least one individual is missing
                 warnings.warn('    Subject {} has {} runs with missing data:\n'
