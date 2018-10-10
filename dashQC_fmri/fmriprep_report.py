@@ -702,11 +702,10 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
 
             sys.stdout.write('\rWaiting for jobs to finish since {:.2f}s. '
                              'There are {}/{} movies left to render (avg so far: {:.2f}s)'
-                             ' and {}/{} runs to process (avg so far: {:.2f}s)'.format(elapsed,
-                                                                                      movie_left, n_movie_jobs,
-                                                                                      avg_movie,
-                                                                                      run_left, n_run_jobs,
-                                                                                      avg_run))
+                             ' and {}/{} runs to process (avg so far: {:.2f}s)'
+                             '       '.format(elapsed,
+                                              movie_left, n_movie_jobs, avg_movie,
+                                              run_left, n_run_jobs, avg_run))
             sys.stdout.flush()
             time.sleep(5)
         else:
