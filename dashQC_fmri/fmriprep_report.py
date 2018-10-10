@@ -694,10 +694,9 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
             break
 
     # Build the group level figures that depend on the run outputs
+    group_sum = np.zeros(temp_i.shape)
+    mask_sum = np.zeros(temp_i.shape)
     for rid, (run_avg, run_mask) in enumerate(run_list):
-        if rid == 0:
-            group_sum = np.zeros(temp_i.shape)
-            mask_sum = np.zeros(temp_i.shape)
         group_sum += run_avg
         mask_sum += run_mask
 
