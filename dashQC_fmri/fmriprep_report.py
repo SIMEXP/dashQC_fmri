@@ -680,25 +680,24 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
               'n_cpu.')
     n_movie_jobs = len(motion_joblist)
     n_run_jobs = len(run_joblist)
+    movie_left = n_movie_jobs
+    run_left = n_run_jobs
+    avg_movie = 0
+    avg_run = 0
     # Wait for the parallel jobs to finish
     while True:
         if not motion_pool.ready() or not run_pool.ready():
             elapsed = time.time() - start_movies
-            movie_left = motion_pool._number_left
-            run_left = run_pool._number_left
-            if movie_left == n_movie_jobs:
-                avg_movie = 0
-            elif movie_left == 0:
-                avg_movie = avg_movie
-            else:
-                avg_movie = elapsed/(n_movie_jobs-movie_left)
 
-            if run_left == n_run_jobs:
-                avg_run = 0
-            elif run_left == 0:
-                avg_run = avg_run
-            else:
-                avg_run = elapsed / (n_run_jobs - run_left)
+            if motion_pool._number_left < movie_left:
+                movie_left = motion_pool._number_left
+                if not movie_left == 0:
+                    avg_movie = elapsed/(n_movie_jobs-movie_left)
+
+            if run_pool._number_left < run_left:
+                run_left = run_pool._number_left
+                if not run_left == 0:
+                    avg_run = elapsed / (n_run_jobs - run_left)
 
             sys.stdout.write('\rWaiting for jobs to finish since {:.2f}s. '
                              'There are {}/{} movies left to render (avg so far: {:.2f}s)'
