@@ -70,7 +70,7 @@ def find_data(preproc_p, raw_p):
         anat_d = preproc_p / subject / 'anat'
         func_d = preproc_p / subject / 'func'
         func_ref_p = list(func_d.glob('{}*MNI152NLin2009cAsym_preproc.nii.gz'.format(subject)))
-        func_mask_p = list(func_d.glob('{}*MNI152NLin2009cAsym_preproc_brainmask.nii.gz'.format(subject)))
+        func_mask_p = list(func_d.glob('{}*MNI152NLin2009cAsym_brainmask.nii.gz'.format(subject)))
         anat_p = list(anat_d.glob('{}*MNI152NLin2009cAsym_preproc.nii.gz'.format(subject)))
         anat_mask_p = list(anat_d.glob('{}*MNI152NLin2009cAsym_preproc.nii.gz'.format(subject)))
         # Make sure all of these exist
@@ -108,6 +108,12 @@ def find_data(preproc_p, raw_p):
 
     if not subjects:
         raise Exception('There are no subjects remaining for which I could '
+                        'generate a dashboard. Please check your paths! '
+                        'preproc_path: {}\n'
+                        'raw_path: {}\nExiting'.format(preproc_p, raw_p))
+
+    if not runs:
+        raise Exception('There are no runs remaining for which I could '
                         'generate a dashboard. Please check your paths! '
                         'preproc_path: {}\n'
                         'raw_path: {}\nExiting'.format(preproc_p, raw_p))
