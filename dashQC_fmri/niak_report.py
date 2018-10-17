@@ -104,10 +104,16 @@ def make_report(preproc_dir, report_dir):
 if "__main__" == __name__:
     parser = argparse.ArgumentParser()
     parser.add_argument("preproc_dir", type=str,
-                        help="path to directory with niak report raw data")
+                        help="path to the directory with the niak preprocessed data")
     parser.add_argument("report_dir", type=str,
                         help="desired path for the report output")
     args = parser.parse_args()
-    make_report(args.preproc_dir, args.report_dir)
-
-
+    # We want to point at the report folder in the niak preprocessing root
+    preproc_p = pal.Path(args.preproc_dir)
+    if str(preproc_p).endswith('report'):
+        make_report(args.preproc_dir, args.report_dir)
+    elif (preproc_p / 'report').exists():
+        make_report(str(preproc_p / 'report'), args.report_dir)
+    else:
+        # It's probably an invalid path but we'll let it error out later down the line
+        make_report(args.preproc_dir, args.report_dir)
