@@ -636,7 +636,7 @@ def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
             f_raw.savefig(fig_anat_raw_p, dpi=200)
             plt.close(f_raw)
         # Make the func figure
-        if not func_ref_p.exists():
+        if not fig_func_p.exists():
             f_func = make_reg_func_figure(str(func_ref_p))
             f_func.savefig(fig_func_p, dpi=200)
             plt.close(f_func)
