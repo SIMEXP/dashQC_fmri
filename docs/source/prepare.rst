@@ -45,7 +45,7 @@ completed ``NIAK`` pipeline is located at :code:`/path/to/my/niak/output/`.
 To generate your ``dashQC_fmri`` report at :code:`/path/to/my/dashQC_fmri/report`
 you would then run
 
-    python -m dashQC_fmri.niak_report /path/to/my/niak/output/ /path/to/my/dashQC_fmri/report /path/to/my/raw/data
+    python -m dashQC_fmri.niak_report /path/to/my/niak/output/ /path/to/my/dashQC_fmri/report
 
 Once the process has completed, navigate to :code:`/path/to/my/dashQC_fmri/report`
 e.g.:
