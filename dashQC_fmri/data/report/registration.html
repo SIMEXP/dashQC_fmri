@@ -137,7 +137,7 @@
                 <ul class="nav navbar-nav navbar-left">
 
                     <li class="navbar_item"><a href="index.html">Summary</a></li>
-                    <li class="navbar_item navbar-brand-current"><a href="registration.html">Registration</a></li>
+                    <li class="navbar_item navbar-brand-current"><a href="registration_new.html">Registration</a></li>
                     <li class="navbar_item"><a href="motion.html">Motion</a></li>
 
                 </ul>
@@ -365,6 +365,9 @@
 
     <!-- List of subjects -->
     <script src="assets/group/js/listSubject.js"></script>
+
+    <!-- Unique ID(s) for this dataset -->
+    <script src="assets/registration/js/datasetID.js"></script>
 
     <!-- QC Dashboard Objects -->
     <script type="text/javascript" src="assets/general/js/qc_dash_objects.js"></script>
@@ -757,7 +760,7 @@
             var event = { params: { data: { id: "1" } } };
             var filesIn = buildFilesIn(event);
 
-            // Add a subject select dropdown
+            // Add a subject select dropdown based on the subject list
             $("#subject-select").select2({ data: listSubject });
             $("#subject-select").on("select2:select", function (p_event) {
 
@@ -770,7 +773,8 @@
 
             // Create new web storage object for subject data
             webStorageElement = new QCDash_WebStorage_SubjectData(
-                                            Object.keys(filesIn.fmri)[0],
+                                            // Object.keys(filesIn.fmri.sessInitialMRI)[0],
+                                            datasetID.timestamp,    // New unique data set ID
                                             "Your comments here...",
                                             "registration-comment-textarea",
                                             $("#subject-select option[value=\"1\"]").text(),
@@ -895,3 +899,4 @@
 </body>
 
 </html>
+
