@@ -18,6 +18,7 @@ copy_debug = False
 
 
 def populate_report(report_p):
+
     if not type(report_p) == pal.Path:
         report_p = pal.Path(report_p)
     # Copy the template into the report folder
@@ -40,6 +41,7 @@ def populate_report(report_p):
 
 
 def clean_folder(p_folder):
+
     cleaned_folder = p_folder.strip()
     if cleaned_folder[len(cleaned_folder) - 1] != os.sep:
         cleaned_folder += os.sep
@@ -47,6 +49,7 @@ def clean_folder(p_folder):
 
 
 def copy_all_files(p_src_folder_wildcard, p_dest_folder):
+
     print("...{0}".format(p_dest_folder))
 
     for file in glob.glob(p_src_folder_wildcard):
@@ -55,12 +58,25 @@ def copy_all_files(p_src_folder_wildcard, p_dest_folder):
         shutil.copy(file, p_dest_folder)
 
 
+def create_dataset_ids(p_dataset_id_folder):
+
+    # Date and/or timestamp will be used by dashQC as unique identifiers for a data set
+    # The assumption here is that it is highly unlikely that two data sets will conflict
+    # based on this distinction criteria
+    with open(p_dataset_id_folder + os.sep + "datasetID.js", "w") as data_id_file:
+        data_id_json = { "date": time.strftime("%Y-%m-%d-%H:%M:%S"),
+                         "timestamp": time.time() }
+        data_id_file.write("var datasetID = " + json.dumps(data_id_json) + ";")
+
+
 def create_folder(p_new_folder):
+
     if not os.path.exists(p_new_folder):
         os.makedirs(p_new_folder)
 
 
 def make_report(preproc_dir, report_dir):
+
     print("Conversion of old NIAK QC dashboard folder structure to new one commencing...")
 
     # (1) In output folder create the following folders:
@@ -97,11 +113,17 @@ def make_report(preproc_dir, report_dir):
     # summary/*.js -> assets/summary/js
     copy_all_files(preproc_dir + "summary{0}*.js".format(os.sep),
                    report_dir + "assets{0}summary{0}js".format(os.sep))
+
+    # (3) Create a JSON file for this conversion session that registers this as a unique data set for the dashQC
+
+    print("Creating unique IDs for this data set...")
+    create_dataset_ids(report_dir + "assets{0}registration{0}js".format(os.sep))    
     
     print("Conversion complete.")
 
 
 if "__main__" == __name__:
+
     parser = argparse.ArgumentParser()
     parser.add_argument("preproc_dir", type=str,
                         help="path to the directory with the niak preprocessed data")
