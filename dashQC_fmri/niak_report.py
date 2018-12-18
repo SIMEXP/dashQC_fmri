@@ -117,8 +117,8 @@ def make_report(preproc_dir, report_dir):
     # (3) Create a JSON file for this conversion session that registers this as a unique data set for the dashQC
 
     print("Creating unique IDs for this data set...")
-    create_dataset_ids(report_dir + "assets{0}registration{0}js".format(os.sep))    
-    
+    create_dataset_ids(report_dir + "assets{0}registration{0}js".format(os.sep))
+ 
     print("Conversion complete.")
 
 
@@ -130,6 +130,7 @@ if "__main__" == __name__:
     parser.add_argument("report_dir", type=str,
                         help="desired path for the report output")
     args = parser.parse_args()
+
     # We want to point at the report folder in the niak preprocessing root
     preproc_p = pal.Path(args.preproc_dir)
     if str(preproc_p).endswith('report'):
