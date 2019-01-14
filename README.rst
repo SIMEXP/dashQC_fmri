@@ -23,5 +23,5 @@ prospective `BIDS derivative <http://bids.neuroimaging.io/>`_ standard.
 If you encounter a bug or would like to contribute to this project, please open
 an issue on our `github repository <https://github.com/SIMEXP/dashQC_fmri/issues>`_.
 If you have questions about how to use ``dashQC_fmri`` please
-head over to `neurostars.org <http://neurostars.org/>`_ and open a topic.
+head over to `neurostars.org <http://neurostars.org/>`_ and open a topic. 
 
