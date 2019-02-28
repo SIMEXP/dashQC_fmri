@@ -300,7 +300,7 @@ def report_subject(sub):
     return report
 
 
-def find_available_subjects(prep_p, raw_p, subject_list_f):
+def find_available_subjects(prep_p, raw_p, subject_list_f=None):
     potential_subjects = [str(query.relative_to(prep_p))
                           for query in prep_p.glob('sub-*') if query.is_dir()]
     available_subjects = list()
@@ -311,6 +311,10 @@ def find_available_subjects(prep_p, raw_p, subject_list_f):
         except FileNotFoundError:
             warnings.warn(f'Could not find all data for subject {sub_name} in {prep_p}')
 
-    with subject_list_f.open(mode='w') as f:
-        f.writelines('\n'.join(available_subjects))
+    if subject_list_f is not None:
+        with subject_list_f.open(mode='w') as f:
+            f.writelines('\n'.join(available_subjects))
+        return None
+    else:
+        return available_subjects
 
