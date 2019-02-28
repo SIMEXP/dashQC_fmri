@@ -53,18 +53,19 @@ class Subject(DataInput):
                                       self.nl['func_ref_pre_f'].format(self.subject_name, '*'))
         self.runs, self.run_names = self.find_runs()
         # Define outputs
+        # Pasted subject names must be tuple for unpacking
         self.fig_anat_reg_outline_f = self._set_path(self.fig_d,
                                                      self.nl['fig_anat_reg_outline_f'],
-                                                     (self.subject_name))
+                                                     (self.subject_name,))
         self.fig_anat_reg_f = self._set_path(self.fig_d,
                                              self.nl['fig_anat_reg_f'],
-                                             (self.subject_name))
+                                             (self.subject_name,))
         self.fig_func_reg_f = self._set_path(self.fig_d,
                                              self.nl['fig_func_reg_f'],
-                                             (self.subject_name))
+                                             (self.subject_name,))
         self.report_f = self._set_path(self.fig_d,
                                        self.nl['report_f'],
-                                       (self.subject_name))
+                                       (self.subject_name,))
         self.outputs = [self.fig_anat_reg_outline_f, self.fig_anat_reg_f, self.fig_func_reg_f, self.report_f]
 
     def find_runs(self):
@@ -317,4 +318,23 @@ def find_available_subjects(prep_p, raw_p, subject_list_f=None):
         return None
     else:
         return available_subjects
+
+
+def process_subject(prep_p, raw_p, subject_name, clobber=False):
+    sub = Subject(prep_p, raw_p, subject_name, get_name_lookup())
+    # Check if the outputs are already generated
+    if sub.check_outputs_done() and not clobber:
+        raise Exception(f'Some subject-level outputs for {sub.subject_name} are already done. '
+                        'Force clobber if you want to overwrite them')
+    if all([run.check_outputs_done() for run in sub.runs]) and not clobber:
+        raise Exception(f'Some run-level outputs for {sub.subject_name} are already done. '
+                        'Force clobber if you want to overwrite them')
+
+    # Generate subject level outputs
+    fig_anat_reg_outline = make_reg_montage(sub.anat_f, cmap=plt.cm.Greys_r)  # Outline overlay is missing
+    fig_anat_reg = make_reg_montage(sub.anat_f, cmap=plt.cm.Greys_r)
+    fig_func_reg = make_reg_montage(sub.func_f)
+    report = report_subject(sub)
+
+    return sub
 
