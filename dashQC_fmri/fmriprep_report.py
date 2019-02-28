@@ -1,6 +1,7 @@
 import re
 import json
 import warnings
+import argparse
 import numpy as np
 import pandas as pd
 import pathlib as pal
@@ -128,15 +129,15 @@ def get_name_lookup():
     name_lookup = {'anat_d': 'anat',
                    'func_d': 'func',
                    'fig_d': 'figures',
-                    'anat_mask_f': '{}_space-*_desc-brain_mask.nii.gz',
-                    'func_mask_f': '{}_*_{}_space-*_desc-brain_mask.nii.gz',
-                    'func_raw_d': 'func',
-                    'anat_pre_f': '{}_*_desc-preproc_T1w.nii.gz',
-                    'func_ref_pre_f': '{}_*_{}_space-*_boldref.nii.gz',
-                    'func_pre_f': '{}_*_{}_space-*_desc-preproc_bold.nii.gz',
-                    'func_ref_raw_f': '{}_*_{}*.nii.gz',
-                    'func_raw_f': '{}_*_{}*.nii.gz',
-                    'confound_f': '{}_*_{}_desc-confounds_regressors.tsv',
+                   'anat_mask_f': '{}_space-*_desc-brain_mask.nii.gz',
+                   'func_mask_f': '{}_*_{}_space-*_desc-brain_mask.nii.gz',
+                   'func_raw_d': 'func',
+                   'anat_pre_f': '{}_*_desc-preproc_T1w.nii.gz',
+                   'func_ref_pre_f': '{}_*_{}_space-*_boldref.nii.gz',
+                   'func_pre_f': '{}_*_{}_space-*_desc-preproc_bold.nii.gz',
+                   'func_ref_raw_f': '{}_*_{}*.nii.gz',
+                   'func_raw_f': '{}_*_{}*.nii.gz',
+                   'confound_f': '{}_*_{}_desc-confounds_regressors.tsv',
                    'fig_anat_reg_outline_f': '{}_anat_reg_outline.png',
                    'fig_anat_reg_f': '{}_anat_reg.png',
                    'fig_func_reg_f': '{}_func_reg.png',
@@ -267,12 +268,12 @@ def brain_correlation(img_test_p, img_ref_p):
 def report_run(run):
     conf = pd.read_csv(run.confounds_f, sep='\t')
     # First add motion parameters
-    report = {f'{cat}_{axis}':list(conf[f'{cat}_{axis}'].values.astype(float))
+    report = {f'{cat}_{axis}': list(conf[f'{cat}_{axis}'].values.astype(float))
               for cat in ['trans', 'rot']
               for axis in ['x', 'y', 'z']}
 
     report['n_vol_before'] = int(conf.shape[0])
-    fd = conf.framewise_displacement.values # First FD is nan as per convention
+    fd = conf.framewise_displacement.values  # First FD is nan as per convention
     motion_mask = fd > 0.5
     # Make the scrubbing mask
     motion_ind = np.argwhere(motion_mask).flatten()
@@ -293,12 +294,12 @@ def report_run(run):
 
 def report_subject(sub):
     report = dict()
-    report['ovlp_T1_stereo'] = brain_overlap(sub.anat_mask_f, sub.anat_mask_f) # replace with MNI
-    report['corr_T1_stereo'] = brain_correlation(sub.anat_f, sub.anat_f) # replace with MNI
-    report['ovlp_BOLD_T1'] = brain_overlap(sub.func_mask_f, sub.anat_mask_f) # replace with MNI
-    report['corr_BOLD_T1'] = brain_correlation(sub.func_f, sub.anat_f) # replace with MNI
+    report['ovlp_T1_stereo'] = brain_overlap(sub.anat_mask_f, sub.anat_mask_f)  # replace with MNI
+    report['corr_T1_stereo'] = brain_correlation(sub.anat_f, sub.anat_f)  # replace with MNI
+    report['ovlp_BOLD_T1'] = brain_overlap(sub.func_mask_f, sub.anat_mask_f)  # replace with MNI
+    report['corr_BOLD_T1'] = brain_correlation(sub.func_f, sub.anat_f)  # replace with MNI
     report['run_names'] = sub.run_names
-    report['runs'] = {run_name:report_run(sub.runs[run_id]) for run_id, run_name in enumerate(report['run_names'])}
+    report['runs'] = {run_name: report_run(sub.runs[run_id]) for run_id, run_name in enumerate(report['run_names'])}
     return report
 
 
@@ -355,3 +356,24 @@ def process_subject(prep_p, raw_p, subject_name, clobber=False):
         fig_mot_raw.savefig(run.fig_mot_raw_f, dpi=100)
         fig_mot.savefig(run.fig_mot_f, dpi=100)
 
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("preproc_dir", type=str,
+                        help="bids conform directory of the fmriprep outputs")
+    parser.add_argument("raw_dir", type=str,
+                        help="bids conform directory of the raw fmriprep input")
+    parser.add_argument("mode", type=str, choices=['detect', 'subject', 'dashboard'],
+                        help="Choose an operating mode.")
+    parser.add_argument("output_path", type=str,
+                        help="Select the path where outputs should be generated. "
+                             "Depending on the mode, this should be either a directory name or a path to a text file.")
+    parser.add_argument("-s", "--subject", type=str,
+                        help="Specify the subject you want to run on. Only works when mode = subject.")
+    args = parser.parse_args()
+    if args.mode == 'detect':
+        find_available_subjects(args.preproc_dir, args.raw_dir, args.output_path)
+    if args.mode == 'subject':
+        process_subject(args.preproc_dir, args.raw_dir, args.subject)
+    if args.mode == 'dashboard':
+        raise Exception('The dashboard generator is not available yet.')
