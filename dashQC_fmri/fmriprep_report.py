@@ -1,4 +1,5 @@
 import re
+import warnings
 import numpy as np
 import pandas as pd
 import pathlib as pal
@@ -298,4 +299,18 @@ def report_subject(sub):
     report['runs'] = {run_name:report_run(sub.runs[run_id]) for run_id, run_name in enumerate(report['run_names'])}
     return report
 
+
+def find_available_subjects(prep_p, raw_p, subject_list_f):
+    potential_subjects = [str(query.relative_to(prep_p))
+                          for query in prep_p.glob('sub-*') if query.is_dir()]
+    available_subjects = list()
+    for sub_name in potential_subjects:
+        try:
+            sub = Subject(prep_p, raw_p, sub_name, get_name_lookup())
+            available_subjects.append(sub_name)
+        except FileNotFoundError:
+            warnings.warn(f'Could not find all data for subject {sub_name} in {prep_p}')
+
+    with subject_list_f.open(mode='w') as f:
+        f.writelines('\n'.join(available_subjects))
 
