@@ -1,4 +1,5 @@
 import re
+import json
 import warnings
 import numpy as np
 import pandas as pd
@@ -335,6 +336,22 @@ def process_subject(prep_p, raw_p, subject_name, clobber=False):
     fig_anat_reg = make_reg_montage(sub.anat_f, cmap=plt.cm.Greys_r)
     fig_func_reg = make_reg_montage(sub.func_f)
     report = report_subject(sub)
+    # Store subject level outputs
+    fig_anat_reg_outline.savefig(sub.fig_anat_reg_outline_f, dpi=300)
+    fig_anat_reg.savefig(sub.fig_anat_reg_f, dpi=300)
+    fig_func_reg.savefig(sub.fig_func_reg_f, dpi=300)
+    with sub.report_f.open('w') as f:
+        json.dump(report, f, indent=4, sort_keys=False)
 
-    return sub
+    # Generate the run level outputs
+    for run in sub.runs:
+        fig_func_ref_raw = target_figure(run.func_ref_raw_f)
+        fig_func_ref = target_figure(run.func_ref_prep_f)
+        fig_mot_raw = motion_figure(run.func_raw_f)
+        fig_mot = motion_figure(run.func_prep_f)
+
+        fig_func_ref_raw.savefig(run.fig_func_ref_raw_f, dpi=100)
+        fig_func_ref.savefig(run.fig_func_ref_f, dpi=100)
+        fig_mot_raw.savefig(run.fig_mot_raw_f, dpi=100)
+        fig_mot.savefig(run.fig_mot_f, dpi=100)
 
