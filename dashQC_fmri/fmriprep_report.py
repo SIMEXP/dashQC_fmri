@@ -11,12 +11,22 @@ from matplotlib import pyplot as plt
 
 class DataInput(object):
     @staticmethod
+    def _set_path(folder, pattern, insert):
+        if len(insert) > 1:
+            return folder / pattern.format(*insert)
+        else:
+            return folder / pattern.format(*(insert,))
+
+    @staticmethod
     def _find_path(folder, pattern):
         search = list(folder.glob(pattern))
         if not len(search) == 1:
             raise FileNotFoundError(
                 f'I found {len(search)} hits for {pattern} in {folder}. There needs to be exactly one match')
         return search[0]
+
+    def check_outputs_done(self):
+        return all([p.exists() for p in self.outputs])
 
 
 class Subject(DataInput):
@@ -25,8 +35,12 @@ class Subject(DataInput):
         self.prep_d = pal.Path(preproc_d) / subject_name
         self.raw_d = pal.Path(raw_d) / subject_name
         self.subject_name = subject_name
+        # Define paths
         self.anat_d = self._find_path(self.prep_d, self.nl['anat_d'])
         self.func_d = self._find_path(self.prep_d, self.nl['func_d'])
+        self.fig_d = self._find_path(self.prep_d, self.nl['fig_d'])
+
+        # Define inputs
         self.anat_mask_f = self._find_path(self.anat_d,
                                            self.nl['anat_mask_f'].format(self.subject_name))
         self.func_mask_f = self._find_path(self.func_d,
@@ -37,6 +51,20 @@ class Subject(DataInput):
         self.func_f = self._find_path(self.func_d,
                                       self.nl['func_ref_pre_f'].format(self.subject_name, '*'))
         self.runs, self.run_names = self.find_runs()
+        # Define outputs
+        self.fig_anat_reg_outline_f = self._set_path(self.fig_d,
+                                                     self.nl['fig_anat_reg_outline_f'],
+                                                     (self.subject_name))
+        self.fig_anat_reg_f = self._set_path(self.fig_d,
+                                             self.nl['fig_anat_reg_f'],
+                                             (self.subject_name))
+        self.fig_func_reg_f = self._set_path(self.fig_d,
+                                             self.nl['fig_func_reg_f'],
+                                             (self.subject_name))
+        self.report_f = self._set_path(self.fig_d,
+                                       self.nl['report_f'],
+                                       (self.subject_name))
+        self.outputs = [self.fig_anat_reg_outline_f, self.fig_anat_reg_f, self.fig_func_reg_f, self.report_f]
 
     def find_runs(self):
         run_names = list()
@@ -57,11 +85,14 @@ class Subject(DataInput):
 
 
 class Run(DataInput):
-    def __init__(self, func_prep_d, func_raw_d, subject_name, run_name, nl):
+    def __init__(self, func_prep_d, func_raw_d, subject_name, run_name, fig_d, nl):
+        # Define paths
         self.func_prep_d = pal.Path(func_prep_d)
         self.func_raw_d = pal.Path(func_raw_d)
+        self.fig_d = pal.Path(fig_d)
         self.subject_name = subject_name
         self.run_name = run_name
+        # Define inputs
         self.confounds_f = self._find_path(self.func_prep_d,
                                            nl['confound_f'].format(self.subject_name, self.run_name))
         self.func_prep_f = self._find_path(self.func_prep_d,
@@ -74,6 +105,44 @@ class Run(DataInput):
                                               nl['func_ref_raw_f'].format(self.subject_name, self.run_name))
         self.func_mask_f = self._find_path(self.func_prep_d,
                                            nl['func_mask_f'].format(self.subject_name, self.run_name))
+        # Define outputs
+        self.fig_func_ref_raw_f = self._set_path(self.fig_d,
+                                                 nl['fig_func_ref_raw_f'], (self.subject_name, self.run_name))
+
+        self.fig_func_ref_f = self._set_path(self.fig_d,
+                                             nl['fig_func_ref_f'], (self.subject_name, self.run_name))
+        self.fig_mot_raw_f = self._set_path(self.fig_d,
+                                            nl['fig_func_mot_raw_f'], (self.subject_name, self.run_name))
+        self.fig_mot_f = self._set_path(self.fig_d,
+                                        nl['fig_func_mot_f'], (self.subject_name, self.run_name))
+        self.outputs = [self.fig_func_ref_raw_f, self.fig_func_ref_f, self.fig_mot_raw_f, self.fig_mot_f]
+
+
+def get_name_lookup():
+    # TODO: BOLD reference at run level
+    # TODO: standard space explicit check
+    # TODO: version specific lookups
+    name_lookup = {'anat_d': 'anat',
+                   'func_d': 'func',
+                   'fig_d': 'figures',
+                    'anat_mask_f': '{}_space-*_desc-brain_mask.nii.gz',
+                    'func_mask_f': '{}_*_{}_space-*_desc-brain_mask.nii.gz',
+                    'func_raw_d': 'func',
+                    'anat_pre_f': '{}_*_desc-preproc_T1w.nii.gz',
+                    'func_ref_pre_f': '{}_*_{}_space-*_boldref.nii.gz',
+                    'func_pre_f': '{}_*_{}_space-*_desc-preproc_bold.nii.gz',
+                    'func_ref_raw_f': '{}_*_{}*.nii.gz',
+                    'func_raw_f': '{}_*_{}*.nii.gz',
+                    'confound_f': '{}_*_{}_desc-confounds_regressors.tsv',
+                   'fig_anat_reg_outline_f': '{}_anat_reg_outline.png',
+                   'fig_anat_reg_f': '{}_anat_reg.png',
+                   'fig_func_reg_f': '{}_func_reg.png',
+                   'fig_func_ref_raw_f': '{}_{}_func_ref_raw.png',
+                   'fig_func_ref_f': '{}_{}_func_ref.png',
+                   'fig_func_mot_raw_f': '{}_{}_func_mot_raw.png',
+                   'fig_func_mot_f': '{}_{}_func_mot.png',
+                   'report_f': '{}_report.json'}
+    return name_lookup
 
 
 def reference_image(img_path, t_min=1, t_max=99.9):
@@ -228,3 +297,5 @@ def report_subject(sub):
     report['run_names'] = sub.run_names
     report['runs'] = {run_name:report_run(sub.runs[run_id]) for run_id, run_name in enumerate(report['run_names'])}
     return report
+
+
