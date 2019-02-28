@@ -1,773 +1,230 @@
-"""
-
-Module for generating the dashboard input data for fmriprep outputs
-
-"""
-
-import io
 import re
-import sys
-import json
-import time
-import inspect
-import argparse
-import warnings
 import numpy as np
 import pandas as pd
-import nibabel as nib
 import pathlib as pal
-from PIL import Image
-# Set figure backend
-import matplotlib
-matplotlib.use('Agg')
-import multiprocessing as mp
-from distutils import dir_util
-from matplotlib import gridspec
+import nibabel as nib
 from nilearn import image as ni
+from matplotlib import gridspec
 from nilearn import plotting as nlp
 from matplotlib import pyplot as plt
 
 
-warnings.filterwarnings('ignore')
+class DataInput(object):
+    @staticmethod
+    def _find_path(folder, pattern):
+        search = list(folder.glob(pattern))
+        if not len(search) == 1:
+            raise FileNotFoundError(
+                f'I found {len(search)} hits for {pattern} in {folder}. There needs to be exactly one match')
+        return search[0]
 
 
-# TODO deal with matplotlib warnings about contour of constant values
-# TODO handle session data
+class Subject(DataInput):
+    def __init__(self, preproc_d, raw_d, subject_name, nl):
+        self.nl = nl
+        self.prep_d = pal.Path(preproc_d) / subject_name
+        self.raw_d = pal.Path(raw_d) / subject_name
+        self.subject_name = subject_name
+        self.anat_d = self._find_path(self.prep_d, self.nl['anat_d'])
+        self.func_d = self._find_path(self.prep_d, self.nl['func_d'])
+        self.anat_mask_f = self._find_path(self.anat_d,
+                                           self.nl['anat_mask_f'].format(self.subject_name))
+        self.func_mask_f = self._find_path(self.func_d,
+                                           self.nl['func_mask_f'].format(self.subject_name, '*'))
+        self.func_raw_d = self._find_path(self.raw_d, self.nl['func_raw_d'])
+        self.anat_f = self._find_path(self.anat_d,
+                                      self.nl['anat_pre_f'].format(self.subject_name))
+        self.func_f = self._find_path(self.func_d,
+                                      self.nl['func_ref_pre_f'].format(self.subject_name, '*'))
+        self.runs, self.run_names = self.find_runs()
+
+    def find_runs(self):
+        run_names = list()
+        runs = list()
+
+        run_cases = [re.search(r'(?<=run-)\d+', str(p)) for p in self.func_d.glob('*run-*')]
+        run_ids = list(set(map(lambda m: int(m.group()), run_cases)))
+
+        for run_id in run_ids:
+            run_name = f'run-{run_id}'
+            run = Run(self.func_d,
+                      self.func_raw_d,
+                      self.subject_name,
+                      run_name, self.nl)
+            run_names.append(run_name)
+            runs.append(run)
+        return runs, run_names
 
 
-def find_data(preproc_p, raw_p):
-    # TODO work better with relative paths (e.g. more than one level)
-    # Find the subjects in the preprocessing folder
-    if not type(preproc_p) == pal.PosixPath:
-        path = pal.Path(preproc_p)
-    subjects = [str(query.relative_to(preproc_p))
-                for query in preproc_p.glob('sub-*') if query.is_dir()]
-    # Find the subjects in the raw folder
-    sub_site_matching = {sub: '' for sub in subjects}
-    subjects_missing_raw = list()
-    if not list(raw_p.glob('sub*')):
-        # No subjects at this level, probably sites
-        for subject in subjects:
-            raw_sub_matches = list(raw_p.glob('*/{}'.format(subject)))
-            if raw_sub_matches:
-                sub_site_matching[subject] = raw_sub_matches[0].parent.name
-            else:
-                subjects_missing_raw.append(subject)
-    if subjects_missing_raw:
-        # At least one individual is missing
-        warnings.warn('I couldn\'t find raw data at {} for the following '
-                      'subjects: \n    {}\nI will remove them from the '
-                      'report'.format(raw_p,
-                                         '\n    '.join(subjects_missing_raw)))
-        for subject in subjects_missing_raw:
-            subjects.remove(subject)
-
-    # Check availability of the preprocessed data
-    subjects_missing_preproc = list()
-    runs = list()
-    for subject in subjects:
-        # Check the subject level data for availability
-        anat_d = preproc_p / subject / 'anat'
-        func_d = preproc_p / subject / 'func'
-        func_ref_p = list(func_d.glob('{}*MNI152NLin2009cAsym_preproc.nii.gz'.format(subject)))
-        func_mask_p = list(func_d.glob('{}*MNI152NLin2009cAsym_brainmask.nii.gz'.format(subject)))
-        anat_p = list(anat_d.glob('{}*MNI152NLin2009cAsym_preproc.nii.gz'.format(subject)))
-        anat_mask_p = list(anat_d.glob('{}*MNI152NLin2009cAsym_preproc.nii.gz'.format(subject)))
-        # Make sure all of these exist
-        if not all([p.exists() for p in [anat_d, func_d]]) or not all([func_ref_p, func_mask_p,
-                                                                       anat_p, anat_mask_p]):
-            # This subject is no good because it doesn't have one of the crucial elements. We'll toss the entire file
-            subjects_missing_preproc.append(subject)
-            continue
-
-        # Now let's see if there are multiple runs
-        runs_missing_data = list()
-        query = func_d.glob('*run-*preproc.nii.gz')
-        if query:
-            for item in query:
-                run = str(item.name).split('.')[0]
-                run_name = re.search(r'.*(?=_space-MNI152NLin2009cAsym_preproc)',
-                                     run).group()
-                # Check if the expected files are here
-                run_p = func_d / '{}.nii.gz'.format(run)
-                run_mask_p = func_d / '{}.nii.gz'.format(re.sub('_preproc', '_brainmask', run))
-                confound_p = func_d / '{}_confounds.tsv'.format(run_name)
-                run_raw_p = raw_p / sub_site_matching[subject] / subject / 'func' / '{}.nii.gz'.format(run_name)
-                if not all([p.exists() for p in [run_p, run_mask_p, confound_p, run_raw_p]]):
-                    # This run doesn't have all available data
-                    runs_missing_data.append(run)
-                    continue
-                runs.append(run)
-            if runs_missing_data:
-                # At least one individual is missing
-                warnings.warn('    Subject {} has {} runs with missing data:\n'
-                              '        {}\n'
-                              '    They will not be included'
-                              ' in the report.'.format(subject, len(runs_missing_data),
-                                                       '\n        '.join(runs_missing_data)))
-
-    if not subjects:
-        raise Exception('There are no subjects remaining for which I could '
-                        'generate a dashboard. Please check your paths! '
-                        'preproc_path: {}\n'
-                        'raw_path: {}\nExiting'.format(preproc_p, raw_p))
-
-    if not runs:
-        raise Exception('There are no runs remaining for which I could '
-                        'generate a dashboard. Please check your paths! '
-                        'preproc_path: {}\n'
-                        'raw_path: {}\nExiting'.format(preproc_p, raw_p))
-
-    return subjects, runs, sub_site_matching
+class Run(DataInput):
+    def __init__(self, func_prep_d, func_raw_d, subject_name, run_name, nl):
+        self.func_prep_d = pal.Path(func_prep_d)
+        self.func_raw_d = pal.Path(func_raw_d)
+        self.subject_name = subject_name
+        self.run_name = run_name
+        self.confounds_f = self._find_path(self.func_prep_d,
+                                           nl['confound_f'].format(self.subject_name, self.run_name))
+        self.func_prep_f = self._find_path(self.func_prep_d,
+                                           nl['func_pre_f'].format(self.subject_name, self.run_name))
+        self.func_raw_f = self._find_path(self.func_raw_d,
+                                          nl['func_raw_f'].format(self.subject_name, self.run_name))
+        self.func_ref_prep_f = self._find_path(self.func_prep_d,
+                                               nl['func_ref_pre_f'].format(self.subject_name, self.run_name))
+        self.func_ref_raw_f = self._find_path(self.func_raw_d,
+                                              nl['func_ref_raw_f'].format(self.subject_name, self.run_name))
+        self.func_mask_f = self._find_path(self.func_prep_d,
+                                           nl['func_mask_f'].format(self.subject_name, self.run_name))
 
 
-def populate_report(report_p):
-    # Copy the template into the report folder
-    repo_p = pal.Path(inspect.getfile(make_report)).parents[0].absolute()
-    dir_util.copy_tree(str(repo_p / 'data/report'), str(report_p), verbose=0)
-    # Create the directory tree for the files that are yet to be created
-    tree_structure = [
-        'assets/group/images',
-        'assets/group/js',
-        'assets/motion/images',
-        'assets/motion/js',
-        'assets/registration/images',
-        'assets/summary/js',
-    ]
-    for branch in tree_structure:
-        branch_p = report_p / branch
-        branch_p.mkdir(parents=True, exist_ok=True)
+def reference_image(img_path, t_min=1, t_max=99.9):
+    data_img = nib.load(str(img_path))
 
-    return
-
-
-def make_str(var_name, items):
-    sorted_items = sorted(items)
-    item_list = [str({'id': iid + 1, 'text': item})
-                 for iid, item in enumerate(sorted_items)]
-    items_str = 'var {} = [\n{},\n];'.format(var_name, ',\n'.join(item_list))
-    return items_str
-
-
-def make_named_str(var_name, *kwargs):
-    item_list = [str([i] + j) for i, j in kwargs]
-    named_str = 'var {} = [{}];'.format(var_name, ',\n'.join(item_list))
-    return named_str
-
-
-def make_reg_anat_figure(data_in, outline_p=None, draw_outline=False):
-    # TODO find a better way to deal with paths and images
-    if type(data_in) == nib.Nifti1Image:
-        img = data_in
+    if len(data_img.shape) > 3:
+        median = np.median(data_img.get_data(), 3)
+        data_img = nib.Nifti1Image(median, header=data_img.header, affine=data_img.affine)
     else:
-        img = nib.load(str(data_in))
-    if draw_outline and not outline_p:
-        raise Exception('Must give path to outline image.')
-    data = img.get_data()
+        data_img = data_img
+
+    vmin = np.percentile(data_img.get_data(), t_min)
+    vmax = np.percentile(data_img.get_data(), t_max)
+
+    return data_img, vmin, vmax
+
+
+def make_reg_montage(data_in, overlay=None, cmap=nlp.cm.black_red):
+    data_img, vmin, vmax = reference_image(data_in, t_min=1, t_max=100)
 
     # Anat plot with contours
-    f_anat = plt.figure(figsize=(6, 6))
-    gs = gridspec.GridSpec(3, 3, figure=f_anat, hspace=0)
+    f_montage = plt.figure(figsize=(6, 6))
+    gs = gridspec.GridSpec(3, 3, figure=f_montage, hspace=0)
     gs.update(bottom=0, left=0, right=1, top=1)
-    ax_top = f_anat.add_subplot(gs[0, :])
-    ax_mid = f_anat.add_subplot(gs[1, :])
-    ax_bottom = f_anat.add_subplot(gs[2, :])
-    d1 = nlp.plot_anat(img, annotate=False, draw_cross=False, black_bg=True,
-                       vmin=0, vmax=np.percentile(data, 99),
+    ax_top = f_montage.add_subplot(gs[0, :])
+    ax_mid = f_montage.add_subplot(gs[1, :])
+    ax_bottom = f_montage.add_subplot(gs[2, :])
+    d1 = nlp.plot_anat(data_img, annotate=False, draw_cross=False, black_bg=True,
+                       vmin=vmin, vmax=vmax, cmap=cmap,
                        cut_coords=(1, 1, 1), display_mode='ortho', axes=ax_top)
 
-    d2 = nlp.plot_anat(img, annotate=False, draw_cross=False, black_bg=True,
-                       vmin=0, vmax=np.percentile(data, 99),
+    d2 = nlp.plot_anat(data_img, annotate=False, draw_cross=False, black_bg=True,
+                       vmin=vmin, vmax=vmax, cmap=cmap,
                        cut_coords=(40, 30, 30), display_mode='ortho',
                        axes=ax_mid)
 
-    d3 = nlp.plot_anat(img, annotate=False, draw_cross=False, black_bg=True,
-                       vmin=0, vmax=np.percentile(data, 99),
+    d3 = nlp.plot_anat(data_img, annotate=False, draw_cross=False, black_bg=True,
+                       vmin=vmin, vmax=vmax, cmap=cmap,
                        cut_coords=(-40, -40, -30), display_mode='ortho',
                        axes=ax_bottom)
-    if not draw_outline:
-        return f_anat
+    if overlay is None:
+        return f_montage
     else:
-        outline_img = nib.load(str(outline_p))
-        d1.add_overlay(outline_img, cmap=plt.cm.coolwarm_r, alpha=0.5)
-        d2.add_overlay(outline_img, cmap=plt.cm.coolwarm_r, alpha=0.5)
-        d3.add_overlay(outline_img, cmap=plt.cm.coolwarm_r, alpha=0.5)
+        d1.add_overlay(str(overlay), cmap=plt.cm.coolwarm_r, alpha=0.5)
+        d2.add_overlay(str(overlay), cmap=plt.cm.coolwarm_r, alpha=0.5)
+        d3.add_overlay(str(overlay), cmap=plt.cm.coolwarm_r, alpha=0.5)
 
-        return f_anat
-
-
-def make_reg_func_figure(data_in, cmap=nlp.cm.black_red, vmin=None):
-    if type(data_in) == nib.Nifti1Image:
-        img = data_in
-    else:
-        img = nib.load(str(data_in))
-
-    if len(img.shape) > 3:
-        median = np.median(img.get_data(), 3)
-        show_img = nib.Nifti1Image(median, header=img.header, affine=img.affine)
-    else:
-        show_img = img
-
-    f = plt.figure(figsize=(6, 6))
-    gs = gridspec.GridSpec(3, 3, figure=f, hspace=0)
-    gs.update(bottom=0, left=0, right=1, top=1)
-    ax_top = f.add_subplot(gs[0, :])
-    ax_mid = f.add_subplot(gs[1, :])
-    ax_bottom = f.add_subplot(gs[2, :])
-    nlp.plot_epi(show_img, annotate=False, draw_cross=False,
-                 black_bg=True, bg_img=None,
-                 cut_coords=(1, 1, 1), display_mode='ortho',
-                 axes=ax_top, cmap=cmap, vmin=vmin,
-                 colorbar=False)
-    nlp.plot_epi(show_img, annotate=False, draw_cross=False,
-                 black_bg=True, bg_img=None,
-                 cut_coords=(40, 30, 30), display_mode='ortho',
-                 axes=ax_mid, cmap=cmap, vmin=vmin,
-                 colorbar=False)
-    nlp.plot_epi(show_img, annotate=False, draw_cross=False,
-                 black_bg=True, bg_img=None, cut_coords=(-40, -40, -30),
-                 display_mode='ortho', axes=ax_bottom, cmap=cmap, vmin=vmin,
-                 colorbar=False)
-
-    return f
+        return f_montage
 
 
-def target_figure(img_path, figure_path, x=3, y=1, dpi=100):
-    # Ensure all paths are pathlib objects
-    if not type(img_path) == pal.Path:
-        img_path = pal.Path(img_path)
-    if not type(figure_path) == pal.Path:
-        figure_path = pal.Path(figure_path)
-
-    raw_i = nib.load(str(img_path))
-    raw = raw_i.get_data()
-    # Get the median of the time points
-    raw_median = np.median(raw, 3)
-    raw_median_img = nib.Nifti1Image(raw_median, affine=raw_i.affine,
-                                     header=raw_i.header)
-
-    f_target = plt.figure(figsize=(x, y))
-    ax = f_target.add_axes([0, 0, 1, 1])
-    nlp.plot_stat_map(raw_median_img, annotate=False, bg_img=None,
-                      draw_cross=False, black_bg=True, cut_coords=(1, 1, 1),
-                      display_mode='ortho', axes=ax, colorbar=False)
-
-    f_target.savefig(str(figure_path), dpi=dpi)
-    # Close the figure
-    plt.close(f_target)
-
-
-def motion_figure(img_path, figure_path, x=3, y=1, dpi=100):
-    # Ensure all paths are pathlib objects
-    if not type(img_path) == pal.Path:
-        img_path = pal.Path(img_path)
-    if not type(figure_path) == pal.Path:
-        figure_path = pal.Path(figure_path)
-
+def motion_figure(img_path, x=3, y=1, cmap=nlp.cm.black_red):
     # Load the image
-    img = nib.load(str(img_path))
-    n_t = img.shape[3]
-    # Create a bytestream for the temporary files
-    buf = io.BytesIO()
-    byte_pos = list()
-    pos = 0
+    data_img = nib.load(str(img_path))
+    n_t = data_img.shape[3]
+
+    vmin = np.percentile(data_img.get_data(), 1)
+    vmax = np.percentile(data_img.get_data(), 99.9)
 
     # Make the figure
-    f_motion = plt.figure(figsize=(x, y))
-    ax = f_motion.add_axes([0, 0, 1, 1])
-    for i in np.arange(n_t, dtype=int):
-        nlp.plot_stat_map(ni.index_img(img, i), annotate=False,
-                          draw_cross=False, black_bg=True,
-                          cut_coords=(1, 1, 1), display_mode='ortho',
-                          axes=ax, colorbar=False, bg_img=None)
-        f_motion.savefig(buf, dpi=dpi)
-        byte_pos.append((pos, buf.tell() - pos))
-        pos = buf.tell()
-
-    plt.close(f_motion)
-    # Patch them back together
-    images = list()
-    for i in byte_pos:
-        buf.seek(i[0])
-        images.append(Image.open(io.BytesIO(buf.read(i[1]))))
-
-    new_im = Image.new('RGB', (x * dpi * n_t, y * dpi))
-    for im_id, im in enumerate(images):
-        new_im.paste(im, (im_id * x * dpi, 0))
-    new_im.save(str(figure_path))
-    # Close the stream
-    buf.close()
-
-    return 0
-
-
-def make_motion_grid(img_path, figure_path, x_step=3, y_step=1, dpi=100):
-    # TODO make useful
-    # TODO use bytestream pasting for speedup
-    # Make a time series png
-    # Ensure all paths are pathlib objects
-    if not type(img_path) == pal.Path:
-        img_path = pal.Path(img_path)
-    if not type(figure_path) == pal.Path:
-        figure_path = pal.Path(figure_path)
-
-    # Load the image
-    func_i = nib.load(str(img_path))
-    # Find the right dimensions for the grid
-    n_t = func_i.shape[-1]
-
-    if not n_t % np.sqrt(n_t):
-        x = y = np.sqrt(n_t)
-    else:
-        x = np.floor(np.sqrt(n_t))
-        if not n_t % x:
-            y = n_t / x
-        else:
-            y = np.floor(n_t / x) + n_t % x
-
-    x = np.int(x)
-    y = np.int(y)
-
-    f = plt.figure(figsize=(x * x_step, y * y_step))
-    gs = gridspec.GridSpec(y, x, hspace=0, wspace=0)
+    f_motion = plt.figure(figsize=(x * n_t, y))
+    gs = gridspec.GridSpec(1, n_t, figure=f_motion, hspace=0, wspace=0)
     gs.update(bottom=0, left=0, right=1, top=1)
-    for i in np.arange(n_t):
-        ax = f.add_subplot(gs[i.astype(int)])
-        nlp.plot_stat_map(ni.index_img(func_i, i), annotate=False,
-                          draw_cross=False, black_bg=True,
-                          cut_coords=(1, 1, 1), display_mode='ortho',
-                          axes=ax, colorbar=False)
 
-    f.savefig(figure_path, dpi=dpi, transparent=True)
+    for i in np.arange(n_t, dtype=int):
+        ax = f_motion.add_subplot(gs[i])
+        nlp.plot_anat(ni.index_img(data_img, i), annotate=False,
+                      draw_cross=False, black_bg=True,
+                      cut_coords=(1, 1, 1), display_mode='ortho',
+                      axes=ax, colorbar=False, cmap=cmap,
+                      vmin=vmin, vmax=vmax)
+
+    return f_motion
 
 
-def make_motion_str(path):
-    # This is the reference string for the .js output
-    tmp_str = """var {} = {{
-    columns: {},
-    selection: {{ enabled: true }}, 
-    onclick: function (d) {{ selectTime(d.index);}} }};"""
-    ref = pd.read_csv(path, delimiter='\t')
-    # Get motion information
-    n_t = ref.shape[0]
-    fd = ref.FramewiseDisplacement.values
-    motion_mask = (fd > 0.5)
+def target_figure(img_path, x=3, y=1, cmap=nlp.cm.black_red):
+    data_img, vmin, vmax = reference_image(img_path, t_min=1, t_max=100)
+    f_target = plt.figure(figsize=(x, y))
+    ax = f_target.add_axes([0, 0, 1, 1])
+    nlp.plot_anat(data_img, annotate=False, vmin=vmin, vmax=vmax, cmap=cmap,
+                  draw_cross=False, black_bg=True, cut_coords=(1, 1, 1),
+                  display_mode='ortho', axes=ax, colorbar=False)
+
+    return f_target
+
+
+def brain_overlap(img_test_p, img_ref_p):
+    img_test, _, _ = reference_image(img_test_p)
+    img_ref, _, _ = reference_image(img_ref_p)
+    # Sample to reference image if not agree
+    if not img_test.shape == img_ref.shape:
+        img_test = ni.resample_img(img_test,
+                                   target_affine=img_ref.affine,
+                                   target_shape=img_ref.shape,
+                                   interpolation='nearest')
+    mask_test = img_test.get_data().astype(bool)
+    mask_ref = img_ref.get_data().astype(bool)
+
+    overlap = np.sum(mask_test & mask_ref) / np.sum(mask_ref)
+
+    return float(overlap)
+
+
+def brain_correlation(img_test_p, img_ref_p):
+    img_test, _, _ = reference_image(img_test_p)
+    img_ref, _, _ = reference_image(img_ref_p)
+    # Sample to reference image if not agree
+    if not img_test.shape == img_ref.shape:
+        img_test = ni.resample_img(img_test,
+                                   target_affine=img_ref.affine,
+                                   target_shape=img_ref.shape,
+                                   interpolation='nearest')
+    data_test = img_test.get_data().flatten()
+    data_ref = img_ref.get_data().flatten()
+    correlation = np.corrcoef(data_test, data_ref)[0, 1]
+
+    return float(correlation)
+
+
+def report_run(run):
+    conf = pd.read_csv(run.confounds_f, sep='\t')
+    # First add motion parameters
+    report = {f'{cat}_{axis}':list(conf[f'{cat}_{axis}'].values.astype(float))
+              for cat in ['trans', 'rot']
+              for axis in ['x', 'y', 'z']}
+
+    report['n_vol_before'] = int(conf.shape[0])
+    fd = conf.framewise_displacement.values # First FD is nan as per convention
+    motion_mask = fd > 0.5
+    # Make the scrubbing mask
     motion_ind = np.argwhere(motion_mask).flatten()
-    scrub_mask = np.zeros(n_t, dtype=np.int)
+    scrubbed = np.zeros(report['n_vol_before'], dtype=int)
     for i in motion_ind:
         if i == 0:
             continue
-        scrub_mask[i - 1:i + 3] = 1
-
-    # Format the values for translation, rotation and motion
-    tsl_txt = [
-        ['motion_t{}'.format(i)] + list(ref['{}'.format(i.upper())].values)
-        for i in ['x', 'y', 'z']]
-    rot_txt = [
-        ['motion_r{}'.format(i)] + list(ref['Rot{}'.format(i.upper())].values)
-        for i in ['x', 'y', 'z']]
-    # Remove the first time point. there is no FD, dashboard doesn't like nan
-    # For the moment, the scrub information is also fixed to zero!
-    fd_txt = [['FD'] + list(ref['FramewiseDisplacement'].values[1:]),
-              ['scrub'] + list(scrub_mask)]
-    out_str = '\n'.join([tmp_str.format('tsl', tsl_txt),
-                         tmp_str.format('rot', rot_txt),
-                         tmp_str.format('fd', fd_txt)])
-    return out_str, scrub_mask, fd
+        scrubbed[i - 1:i + 3] = 1
+    report['mean_fd_before'] = float(np.nanmean(fd))
+    report['mean_fd_after'] = float(np.nanmean(fd[~scrubbed.astype(bool)]))
+    report['n_vol_after'] = int(np.sum(~scrubbed.astype(bool)))
+    report['scrubbed'] = [float(scrub) for scrub in scrubbed]
+    report['fd'] = [float(f) for f in fd]
+    # Placeholder for current dashboard
+    report['corr_run_ref'] = 1
+    return report
 
 
-def save_js(s, path):
-    with open(path, 'w') as f:
-        f.write(s)
-
-
-def save_json(d, path):
-    with open(path, 'w') as f:
-        f.write(json.dumps(d, indent=4))
-
-
-def _run_wrapper(run_path, run_raw_path, standard_target_path, native_target_path,
-                 run_mask_path, temp_i):
-    # Group mask - we are resampling here because not all EPI sequences
-    # necessarily have the same acquisition matrix
-    func_i = nib.load(str(run_path))
-    func_avg_i = nib.Nifti1Image(np.mean(func_i.get_data(), 3),
-                                 affine=func_i.affine, header=func_i.header)
-    res_func_i = ni.resample_img(func_avg_i, target_affine=temp_i.affine,
-                                 target_shape=temp_i.shape,
-                                 interpolation='nearest')
-
-    func_mask_i = nib.load(str(run_mask_path))
-    func_mask_temp_i = nib.Nifti1Image(func_mask_i.get_data().astype(np.int),
-                                       affine=func_mask_i.affine, header=func_mask_i.header)
-    func_mask_i = ni.resample_img(func_mask_temp_i,
-                                  target_affine=temp_i.affine,
-                                  target_shape=temp_i.shape,
-                                  interpolation='nearest')
-
-    run_avg = res_func_i.get_data()
-    run_mask = func_mask_i.get_data().astype(int)
-
-    # Make the standard space figure
-    if not standard_target_path.exists():
-        target_figure(run_path, standard_target_path)
-    # Make the native figures
-    if not native_target_path.exists():
-        target_figure(str(run_raw_path), native_target_path)
-
-    return run_avg, run_mask
-
-
-def make_report(prep_p, report_p, raw_p, n_cpu=mp.cpu_count()-2):
-    # TODO: make list of files to be created, check against existing files
-    # TODO: every run level process is run in parallel
-
-    if not type(report_p) == pal.Path:
-        report_p = pal.Path(report_p)
-    if not type(raw_p) == pal.Path:
-        raw_p = pal.Path(raw_p)
-
-    # Leave some room to breathe for the sequential process, if we can
-    if n_cpu > 1:
-        n_cpu -= 1
-    elif n_cpu < 1:
-        n_cpu = 1
-
-    # Find the repo path where the templates are
-    repo_p = pal.Path(inspect.getfile(make_report)).parents[0].absolute()
-
-    # Hardcoded data structure for now
-    # TODO read data structure from a file
-    data_structure = {'chartBOLD': 'assets/summary/js/chartBOLD.js',
-                      'chartBrain': 'assets/summary/js/chartBrain.js',
-                      'chartT1': 'assets/summary/js/chartT1.js',
-                      'fd': 'assets/summary/js/fd.js',
-                      'run_motion': 'assets/motion/js/dataMotion_{}.js',
-                      'listSubject': 'assets/group/js/listSubject.js',
-                      'listRun': 'assets/group/js/listRun.js',
-                      'fig_native_target':
-                          'assets/motion/images/target_native_{}.png',
-                      'fig_native_motion':
-                          'assets/motion/images/motion_native_{}.png',
-                      'fig_standard_target':
-                          'assets/motion/images/target_stereo_{}.png',
-                      'fig_standard_motion':
-                          'assets/motion/images/motion_stereo_{}.png',
-                      'fig_anat': 'assets/registration/images/{}_anat.png',
-                      'fig_anat_raw':
-                          'assets/registration/images/{}_anat_raw.png',
-                      'fig_func': 'assets/registration/images/{}_func.png',
-                      'fig_temp': 'assets/group/images/template_stereotaxic.png',
-                      'fig_temp_raw': 'assets/group/images/template_stereotaxic_raw.png',
-                      'fig_group_T1_avg': 'assets/group/images/average_t1_stereotaxic.png',
-                      'fig_group_EPI_avg': 'assets/group/images/average_func_stereotaxic.png',
-                      'fig_group_EPI_mask': 'assets/group/images/mask_func_group_stereotaxic.png',
-                      'fig_group_EPI_mask_avg': 'assets/group/images/average_mask_func_stereotaxic.png'
-                      }
-
-    populate_report(report_p)
-    subjects, runs, sub_site_matching = find_data(prep_p, raw_p)
-    print('I found {} subjects and {} subject runs to process.'.format(len(subjects), len(runs)))
-    n_runs = len(runs)
-    # Generate the run and subject files
-    subjects_str = make_str(var_name='listSubject', items=subjects)
-    save_js(subjects_str, str(report_p / data_structure['listSubject']))
-    runs_str = make_str(var_name='dataRun', items=runs)
-    save_js(runs_str, str(report_p / data_structure['listRun']))
-
-    # Load the outline and the MNI template
-    temp_p = repo_p / 'data/images/MNI_ICBM152_T1_asym_09c.nii.gz'
-    outline_p = repo_p / 'data/images/MNI_ICBM152_09c_outline.nii.gz'
-    mask_p = repo_p / 'data/images/MNI_ICBM152_09c_mask.nii.gz'
-    # Create the MNI outline figure
-    f_temp = make_reg_anat_figure(temp_p, outline_p, draw_outline=True)
-    f_temp.savefig(report_p / data_structure['fig_temp'], dpi=200)
-    f_temp_raw = make_reg_anat_figure(temp_p, draw_outline=False)
-    f_temp_raw.savefig(report_p / data_structure['fig_temp_raw'], dpi=200)
-    # Load the MNI data
-    temp_i = nib.load(str(temp_p))
-    temp_data = temp_i.get_data()
-    temp_mask = nib.load(str(mask_p)).get_data().astype(bool)
-
-    # Files generated once per run
-    # TODO find better way to get the scrub mask than from the string generator
-    run_level = {var: list() for var in ['Run', 'FD_before', 'FD_after',
-                                         'VOL_OK', 'VOL_scrubbed']}
-    # Build the joblist for the motion figure which takes up most of the time
-    motion_joblist = list()
-    run_joblist = list()
-    for rid, run in enumerate(runs):
-        # Define names
-        run_name = re.search(r'.*(?=_space-MNI152NLin2009cAsym_preproc)',
-                             run).group()
-        sub_name = re.search(r'.*(?=_task)', run_name).group()
-
-        # Define paths
-        run_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(run)
-        run_mask_path = prep_p / sub_name / 'func' / '{}.nii.gz'.format(re.sub('_preproc', '_brainmask', run))
-        run_raw_path = raw_p / sub_site_matching[sub_name] / sub_name / 'func' / '{}.nii.gz'.format(run_name)
-        native_target_path = report_p / data_structure['fig_native_target'].format(run)
-        standard_target_path = report_p / data_structure['fig_standard_target'].format(run)
-        native_motion_path = report_p / data_structure['fig_native_motion'].format(run)
-        standard_motion_path = report_p / data_structure['fig_standard_motion'].format(run)
-
-        # Setup the target figures
-        run_joblist.append((run_path, run_raw_path,
-                            standard_target_path, native_target_path,
-                            run_mask_path, temp_i))
-
-        # Set up the motion figures
-        if not standard_motion_path.exists():
-            motion_joblist.append((run_path, standard_motion_path))
-        if not native_motion_path.exists():
-            motion_joblist.append((run_raw_path, native_motion_path))
-
-    # Spawn the workers for the motion figures
-    pool = mp.Pool(processes=n_cpu)
-    motion_pool = pool.starmap_async(motion_figure, motion_joblist)
-    run_pool = pool.starmap_async(_run_wrapper, run_joblist)
-    start_movies = time.time()
-
-    # Do it again, only for the strings because they are fast
-    for rid, run in enumerate(runs):
-        run_level['Run'].append(run)
-        # Define names
-        run_name = re.search(r'.*(?=_space-MNI152NLin2009cAsym_preproc)',
-                             run).group()
-        sub_name = re.search(r'.*(?=_task)', run_name).group()
-        # Define paths
-        confound_path = prep_p / sub_name / 'func' / '{}_confounds.tsv'.format(run_name)
-
-        # Make the dataMotion file
-        data_motion_str, scrub_mask, fd = make_motion_str(str(confound_path))
-        run_level['FD_before'].append(str(np.nanmean(fd)))
-        run_level['FD_after'].append(str(np.nanmean(fd[scrub_mask != 1])))
-        run_level['VOL_OK'].append(str(np.sum(scrub_mask != 1)))
-        run_level['VOL_scrubbed'].append(str(np.sum(scrub_mask)))
-        save_js(data_motion_str, str(report_p /
-                                     data_structure['run_motion'].format(run)))
-
-    # Make the FD file
-    fd_str = make_named_str('dataFD', ('Run', run_level['Run']),
-                            ('FD_before', run_level['FD_before']),
-                            ('FD_after', run_level['FD_after']))
-    nb_str = make_named_str('dataNbVol', ('Run', run_level['Run']),
-                            ('vol_scrubbed', run_level['VOL_scrubbed']),
-                            ('vol_ok', run_level['VOL_OK']))
-    fd_str = '\n'.join([fd_str, nb_str])
-    save_js(fd_str, str(report_p / data_structure['fd']))
-
-    # Files created once per subject
-    sub_level = {var: list() for var in ['Sub', 'T1_over', 'T1_corr',
-                                         'EPI_over', 'EPI_corr']}
-    anat_sum = np.zeros(temp_i.shape)
-    for sid, sub in enumerate(subjects):
-        sub_start = time.time()
-        sub_level['Sub'].append(sub)
-
-        # TODO make the glob pattern more flexible to deal with other spaces
-        func_d = prep_p / sub / 'func'
-        anat_d = prep_p / sub / 'anat'
-        func_ref_p = \
-            list(func_d.glob(
-                '{}*MNI152NLin2009cAsym_preproc.nii.gz'.format(sub)))[
-                0]
-        func_mask_p = list(
-            func_d.glob('{}*MNI152NLin2009cAsym_brainmask.nii.gz'.format(sub)))[
-            0]
-        anat_p = \
-            list(anat_d.glob(
-                '{}*MNI152NLin2009cAsym_preproc.nii.gz'.format(sub)))[
-                0]
-        anat_mask_p = list(
-            anat_d.glob('{}*MNI152NLin2009cAsym_brainmask.nii.gz'.format(sub)))[
-            0]
-        # Define the names of the files to generate
-        fig_anat_p = report_p / data_structure['fig_anat'].format(sub)
-        fig_anat_raw_p = report_p / data_structure['fig_anat_raw'].format(sub)
-        fig_func_p = report_p / data_structure['fig_func'].format(sub)
-
-
-        # Get reference data
-        anat = nib.load(str(anat_p)).get_data()
-        anat_mask = nib.load(str(anat_mask_p)).get_data().astype(bool)
-        # Func resample
-        func_mask_i = nib.load(str(func_mask_p))
-        func_mask_temp_i = nib.Nifti1Image(
-            func_mask_i.get_data().astype(np.int), affine=func_mask_i.affine,
-            header=func_mask_i.header)
-        res_func_mask_i = ni.resample_img(func_mask_temp_i,
-                                          target_affine=temp_i.affine,
-                                          target_shape=temp_i.shape,
-                                          interpolation='nearest')
-        func_ref_i = nib.load(str(func_ref_p))
-        func_avg_i = nib.Nifti1Image(np.mean(func_ref_i.get_data(), 3),
-                                     affine=func_ref_i.affine,
-                                     header=func_ref_i.header)
-        res_func_ref_i = ni.resample_img(func_avg_i,
-                                         target_affine=temp_i.affine,
-                                         target_shape=temp_i.shape,
-                                         interpolation='nearest')
-
-        # T1 - Template
-        anat_overlap = np.sum(anat_mask & temp_mask) / np.sum(anat_mask)
-        sub_level['T1_over'].append(str(anat_overlap))
-        anat_correlation = np.corrcoef(anat.flatten(), temp_data.flatten())[
-            0, 1]
-        sub_level['T1_corr'].append(str(anat_correlation))
-        # Bold - T1
-        func_mask = res_func_mask_i.get_data().astype(bool)
-        func_ref_res = res_func_ref_i.get_data()
-        func_overlap = np.sum(func_mask & anat_mask) / np.sum(func_mask)
-        sub_level['EPI_over'].append(str(func_overlap))
-        func_correlation = np.corrcoef(anat.flatten(), func_ref_res.flatten())[
-            0, 1]
-        sub_level['EPI_corr'].append(str(func_correlation))
-        # Sum individual T1
-        anat_sum += anat
-
-        # Make the figures
-        if not fig_anat_p.exists():
-            f_anat = make_reg_anat_figure(str(anat_p), outline_p, draw_outline=True)
-            f_anat.savefig(fig_anat_p, dpi=200)
-            plt.close(f_anat)
-        if not fig_anat_raw_p.exists():
-            f_raw = make_reg_anat_figure(str(anat_p), outline_p, draw_outline=False)
-            f_raw.savefig(fig_anat_raw_p, dpi=200)
-            plt.close(f_raw)
-        # Make the func figure
-        if not fig_func_p.exists():
-            f_func = make_reg_func_figure(str(func_ref_p))
-            f_func.savefig(fig_func_p, dpi=200)
-            plt.close(f_func)
-        print('Subject {}/{} done. Took {:.2f}s.'.format(sid + 1, len(subjects),
-                                                         time.time() - sub_start))
-    # Make T1 average
-    anat_avg = anat_sum / len(subjects)
-    anat_avg_i = nib.Nifti1Image(anat_avg, affine=temp_i.affine,
-                                 header=temp_i.header)
-    # Make the average figure
-    f_anat_avg = make_reg_anat_figure(anat_avg_i)
-    f_anat_avg.savefig(report_p / data_structure['fig_group_T1_avg'], dpi=200)
-
-    # One time files
-    # TODO figure out a way to deal with need for reference EPI
-    bold_str = make_named_str('dataBOLD', ('Subject', subjects),
-                              ('corr_target', sub_level['EPI_corr']))
-    brain_str = make_named_str('dataBrain', ('Subject', subjects),
-                               ('overlap_brain', sub_level['EPI_over']))
-    chart_bold_str = '\n'.join([bold_str, brain_str])
-    save_js(chart_bold_str, str(report_p / data_structure['chartBOLD']))
-
-    # Make chartBrain.js - for now with dummy values
-    bold_intra_str = make_named_str('dataIntra', ('Run', runs),
-                                    ('corr_target', [1 for run in runs]))
-    save_js(bold_intra_str, str(report_p / data_structure['chartBrain']))
-
-    # Make T1chart.js
-    t1_str = make_named_str('dataT1', ('Subject', subjects),
-                            ('corr_target', sub_level['T1_corr']))
-    t1_overlap_str = make_named_str('dataOverlapT1', ('Subject', subjects),
-                                    ('overlap_brain', sub_level['T1_over']))
-    chart_t1_str = '\n'.join([t1_str, t1_overlap_str])
-    save_js(chart_t1_str, str(report_p / data_structure['chartT1']))
-
-    # Make sure the motion figures are done:
-    if not motion_pool.ready() or not run_pool.ready():
-        print('Almost done, we are currently waiting for the scanner time '
-              'series movies to render. This can take a long time. If you '
-              'want to speed up this process, increase the number of CPUs with '
-              'n_cpu.')
-    n_movie_jobs = len(motion_joblist)
-    n_run_jobs = len(run_joblist)
-    movie_left = n_movie_jobs
-    run_left = n_run_jobs
-    avg_movie = 0
-    avg_run = 0
-    # Wait for the parallel jobs to finish
-    while True:
-        if not motion_pool.ready() or not run_pool.ready():
-            elapsed = time.time() - start_movies
-
-            if motion_pool._number_left < movie_left:
-                movie_left = motion_pool._number_left
-                if not movie_left == 0:
-                    avg_movie = elapsed/(n_movie_jobs-movie_left)
-
-            if run_pool._number_left < run_left:
-                run_left = run_pool._number_left
-                if not run_left == 0:
-                    avg_run = elapsed / (n_run_jobs - run_left)
-
-            sys.stdout.write('\rWaiting for jobs to finish since {:.2f}s. '
-                             'There are {}/{} movies left to render (avg so far: {:.2f}s)'
-                             ' and {}/{} runs to process (avg so far: {:.2f}s)'
-                             '       '.format(elapsed,
-                                              movie_left, n_movie_jobs, avg_movie,
-                                              run_left, n_run_jobs, avg_run))
-            sys.stdout.flush()
-            time.sleep(5)
-        else:
-            # Check the movies first
-            print('\nAll in scanner movies have completed. Checking if they were successful.')
-            # Get the returns to possibly raise an exception here.
-            _ = motion_pool.get()
-
-            # Check the run level data
-            print('\nAll level jobs were completed. Collecting data.')
-            run_list = run_pool.get()
-            break
-
-    # Build the group level figures that depend on the run outputs
-    group_sum = np.zeros(temp_i.shape)
-    mask_sum = np.zeros(temp_i.shape)
-    for rid, (run_avg, run_mask) in enumerate(run_list):
-        group_sum += run_avg
-        mask_sum += run_mask
-
-    print('All data collected, generate group level figures.')
-
-    # Make group level figures
-    group_avg = group_sum / n_runs
-    group_avg_lower_cutoff = np.percentile(group_avg, 1)
-    group_avg_i = nib.Nifti1Image(group_avg, affine=temp_i.affine,
-                                  header=temp_i.header)
-    mask_avg = mask_sum / n_runs
-    mask_avg_i = nib.Nifti1Image(mask_avg, affine=temp_i.affine,
-                                 header=temp_i.header)
-    group_mask = mask_avg > 0.95
-    group_mask_i = nib.Nifti1Image(group_mask, affine=temp_i.affine,
-                                   header=temp_i.header)
-
-    f_group_avg = make_reg_func_figure(group_avg_i, vmin=group_avg_lower_cutoff)
-    f_group_mask_avg = make_reg_func_figure(mask_avg_i)
-    f_group_mask = make_reg_func_figure(group_mask_i, vmin=0)
-
-    f_group_avg.savefig(report_p / data_structure['fig_group_EPI_avg'], dpi=200)
-    f_group_mask_avg.savefig(
-        report_p / data_structure['fig_group_EPI_mask_avg'],
-        dpi=200)
-    f_group_mask.savefig(report_p / data_structure['fig_group_EPI_mask'],
-                         dpi=200)
-
-    print('\nEverything is done. Check out your report at {}. Goodbye.'.format(report_p))
-
-    return 'OK'
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("preproc_dir", type=str,
-                        help="bids conform directory of the fmriprep outputs")
-    parser.add_argument("report_dir", type=str,
-                        help="desired path for the report output")
-    parser.add_argument("raw_dir", type=str,
-                        help="bids conform directory of the raw fmriprep input")
-    parser.add_argument("-n_cpu", "--number_of_cpus", type=int, default=mp.cpu_count()-2,
-                        help="specify the number of CPUs that should be used by the report generator")
-    args = parser.parse_args()
-
-    make_report(pal.Path(args.preproc_dir),
-                pal.Path(args.report_dir),
-                pal.Path(args.raw_dir),
-                args.number_of_cpus)
+def report_subject(sub):
+    report = dict()
+    report['ovlp_T1_stereo'] = brain_overlap(sub.anat_mask_f, sub.anat_mask_f) # replace with MNI
+    report['corr_T1_stereo'] = brain_correlation(sub.anat_f, sub.anat_f) # replace with MNI
+    report['ovlp_BOLD_T1'] = brain_overlap(sub.func_mask_f, sub.anat_mask_f) # replace with MNI
+    report['corr_BOLD_T1'] = brain_correlation(sub.func_f, sub.anat_f) # replace with MNI
+    report['run_names'] = sub.run_names
+    report['runs'] = {run_name:report_run(sub.runs[run_id]) for run_id, run_name in enumerate(report['run_names'])}
+    return report
