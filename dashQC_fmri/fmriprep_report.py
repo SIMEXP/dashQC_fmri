@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pathlib as pal
 import nibabel as nib
+from distutils import dir_util
 from nilearn import image as ni
 from matplotlib import gridspec
 from nilearn import plotting as nlp
@@ -15,10 +16,7 @@ from matplotlib import pyplot as plt
 class DataInput(object):
     @staticmethod
     def _set_path(folder, pattern, insert):
-        if len(insert) > 1:
-            return folder / pattern.format(*insert)
-        else:
-            return folder / pattern.format(*(insert,))
+        return folder / pattern.format(*insert)
 
     @staticmethod
     def _find_path(folder, pattern):
@@ -38,6 +36,7 @@ class Subject(DataInput):
         self.prep_d = pal.Path(preproc_d) / subject_name
         self.raw_d = pal.Path(raw_d) / subject_name
         self.subject_name = subject_name
+
         # Define paths
         self.anat_d = self._find_path(self.prep_d, self.nl['anat_d'])
         self.func_d = self._find_path(self.prep_d, self.nl['func_d'])
@@ -54,6 +53,7 @@ class Subject(DataInput):
         self.func_f = self._find_path(self.func_d,
                                       self.nl['func_ref_pre_f'].format(self.subject_name, '*'))
         self.runs, self.run_names = self.find_runs()
+
         # Define outputs
         # Pasted subject names must be tuple for unpacking
         self.fig_anat_reg_outline_f = self._set_path(self.fig_d,
@@ -82,7 +82,7 @@ class Subject(DataInput):
             run = Run(self.func_d,
                       self.func_raw_d,
                       self.subject_name,
-                      run_name, self.nl)
+                      run_name, self.fig_d, self.nl)
             run_names.append(run_name)
             runs.append(run)
         return runs, run_names
@@ -149,8 +149,64 @@ def get_name_lookup():
     return name_lookup
 
 
-def reference_image(img_path, t_min=1, t_max=99.9):
-    data_img = nib.load(str(img_path))
+def get_report_lookup():
+    report_lookup = {'fd': 'summary/js/fd.js',
+                     'chartBOLD': 'summary/js/chartBOLD.js',
+                     'chartBrain': 'summary/js/chartBrain.js',
+                     'chartT1': 'summary/js/chartT1.js',
+                     'filesIn': 'summary/js/filesIn.js',
+                     'pipeSummary': 'summary/js/pipeSummary.js',
+                     'listSubject': 'group/js/listSubject.js',
+                     'listRun': 'group/js/listRun.js',
+                     'dataMotion': 'motion/js/dataMotion_{}.js',
+                     'fig_avg_func':'group/images/average_func_stereotaxic.png',
+                     'fig_avg_mask_func': 'group/images/average_mask_func_stereotaxic.png',
+                     'fig_mask_func': 'group/images/mask_func_group_stereotaxic.png',
+                     'fig_avg_t1': 'group/images/average_t1_stereotaxic.png',
+                     'fig_template': 'group/images/template_stereotaxic.png',
+                     'fig_template_outline': 'group/images/template_stereotaxic_raw.png'
+                     }
+    return report_lookup
+
+
+def get_template():
+    # TODO accept other templates ?
+    template_dir = (pal.Path(__file__) / '../data/images').resolve()
+    template = {'T1': template_dir / 'MNI_ICBM152_T1_asym_09c.nii.gz',
+                'mask': template_dir / 'MNI_ICBM152_09c_mask.nii.gz',
+                'outline': template_dir / 'MNI_ICBM152_09c_outline.nii.gz'
+                }
+    if not all([template[key].exists() for key in template.keys()]):
+        raise Exception(f'Could not find the builtin template images at {template_dir}: '
+                        f'{[(key, template[key].exists()) for key in template.keys()]}')
+
+    return template
+
+
+def populate_report(report_p, clobber=False):
+    # Copy the template into the report folder
+    report_template_p = (pal.Path(__file__) / '../data/report').resolve()
+    dir_util.copy_tree(str(report_template_p), str(report_p), verbose=0)
+    # Create the directory tree for the files that are yet to be created
+    tree_structure = [
+        'assets/group/images',
+        'assets/group/js',
+        'assets/motion/images',
+        'assets/motion/js',
+        'assets/registration/images',
+        'assets/summary/js',
+    ]
+
+    for branch in tree_structure:
+        branch_p = report_p / branch
+        branch_p.mkdir(parents=True, exist_ok=clobber)
+
+
+def reference_image(data_in, t_min=1, t_max=99.9):
+    if issubclass(type(data_in), pal.Path) or type(data_in) == str:
+        data_img = nib.load(str(data_in))
+    else:
+        data_img = data_in
 
     if len(data_img.shape) > 3:
         median = np.median(data_img.get_data(), 3)
@@ -265,6 +321,55 @@ def brain_correlation(img_test_p, img_ref_p):
     return float(correlation)
 
 
+def average_image(paths):
+    # Average image from paths of images
+    images = [nib.load(str(p)) for p in paths]
+    sizes = set([img.shape for img in images])
+    if not len(sizes)==1:
+        raise Exception(f'images to be averaged have inconsitent sizes: {sizes}')
+    size = list(sizes)[0]
+    n_img = len(images)
+    avg = np.zeros(size)
+    for img in images:
+        avg += img.get_data()
+    avg /= n_img
+    avg_img = nib.Nifti1Image(avg, affine=img.affine, header=img.header)
+
+    return avg_img
+
+
+def make_dict_str(var_name, items):
+    dict_str = ',\n'.join([str({'id': iid+1,
+                  'text': item
+                 }) for iid, item in enumerate(items)])
+    out_str = f'var {var_name} = [\n{dict_str}\n];'
+    return out_str
+
+
+def make_list_str(var_name, *kwargs):
+    list_str = ',\n'.join(list(map(str, kwargs)))
+    out_str = f'var {var_name} = [\n{list_str}\n];'
+    return out_str
+
+
+def make_run_str(run_report):
+    boilerplate = 'selection: {\n  enabled: true\n},\nonclick: function(d) { selectTime(d.index);}'
+    translation = ',\n'.join(['{}'.format([f'motion_t{axis}'] + run_report[f'trans_{axis}'])
+                              for axis in ['x', 'y', 'z']])
+    rotation = ',\n'.join(['{}'.format([f'motion_r{axis}'] + run_report[f'rot_{axis}'])
+                           for axis in ['x', 'y', 'z']])
+    fd = ['FD'] + list(map(str, run_report['fd']))
+    fd_mask = ['scrub'] + list(map(str, run_report['scrubbed']))
+    scrub = ',\n'.join(['{}'.format(var) for var in [fd, fd_mask]])
+
+    part_1 = 'var tsl = {\n  columns: [\n' + translation + '],\n' + boilerplate + '\n};'
+    part_2 = 'var rot = {\n  columns: [\n' + rotation + '],\n' + boilerplate + '\n};'
+    part_3 = 'var fd = {\n  columns: [\n' + scrub + '],\n' + boilerplate + '\n};'
+
+    out_str = '\n'.join([part_1, part_2, part_3])
+    return out_str
+
+
 def report_run(run):
     conf = pd.read_csv(run.confounds_f, sep='\t')
     # First add motion parameters
@@ -322,7 +427,7 @@ def find_available_subjects(prep_p, raw_p, subject_list_f=None):
         return available_subjects
 
 
-def process_subject(prep_p, raw_p, subject_name, clobber=False):
+def process_subject(prep_p, raw_p, subject_name, clobber=True):
     sub = Subject(prep_p, raw_p, subject_name, get_name_lookup())
     # Check if the outputs are already generated
     if sub.check_outputs_done() and not clobber:
@@ -357,6 +462,146 @@ def process_subject(prep_p, raw_p, subject_name, clobber=False):
         fig_mot.savefig(run.fig_mot_f, dpi=100)
 
 
+def generate_dashboard(prep_p, raw_p, report_p, clobber=True):
+    try:
+        report_p.mkdir(exist_ok=clobber)
+    except FileExistsError as e:
+        raise Exception(f'The report directory already exists. Set clobber=True if you want to overwrite.') from e
+
+    populate_report(report_p, clobber=clobber)
+    potential_subjects = [str(query.relative_to(prep_p))
+                          for query in prep_p.glob('sub-*') if query.is_dir()]
+    available_subjects = list()
+
+    subjects = list()
+    for sub_name in potential_subjects:
+        try:
+            sub = Subject(prep_p, raw_p, sub_name, get_name_lookup())
+        except FileNotFoundError:
+            warnings.warn(f'Could not find all data for subject {sub_name} in {prep_p}')
+            continue
+        if sub.check_outputs_done():
+            available_subjects.append(sub_name)
+            subjects.append(sub)
+        else:
+            warnings.warn(f'{sub_name} is not finished yet in {prep_p}')
+
+    # Obtain group level images
+    t1_group_average = average_image([sub.anat_f for sub in subjects])
+    func_group_average = average_image([sub.func_f for sub in subjects])
+    func_group_mask_average = average_image([sub.func_mask_f for sub in subjects])
+    # Threshold the average subject at the 95th percentile
+    func_group_mask = nib.Nifti1Image((func_group_mask_average.get_data() > 0.95).astype(int),
+                                      affine=func_group_mask_average.affine,
+                                      header=func_group_mask_average.header)
+
+    # Generate figures
+    temp = get_template()
+    fig_t1_group_average = make_reg_montage(t1_group_average,
+                                            overlay=temp['outline'],
+                                            cmap=plt.cm.Greys_r)
+    fig_func_group_average = make_reg_montage(func_group_average,
+                                            overlay=temp['outline'])
+    fig_func_group_mask_average = make_reg_montage(func_group_mask_average)
+    fig_func_group_mask = make_reg_montage(func_group_mask)
+    fig_template_outline = make_reg_montage(temp['T1'], overlay=temp['outline'],
+                                            cmap=plt.cm.Greys_r)
+    fig_template = make_reg_montage(temp['T1'], cmap=plt.cm.Greys_r)
+
+    # Get the corresponding runs
+    runs = [run for sub in subjects for run in sub.runs]
+    available_runs = [f'{run.subject_name}_{run.run_name}' for run in runs]
+    reports = {sub.subject_name: json.loads(sub.report_f.read_text())
+               for sub in subjects}
+
+    # Generate js files
+    subject_list_str = make_dict_str('listSubject', available_subjects)
+    run_list_str = make_dict_str('dataRun', available_runs)
+
+    fd_part1 = make_list_str('dataFD',
+                             ['Run'] + available_runs,
+                             ['FD_before'] + [str(reports[run.subject_name]['runs'][run.run_name]['mean_fd_before'])
+                                              for run in runs],
+                             ['FD_after'] + [str(reports[run.subject_name]['runs'][run.run_name]['mean_fd_after'])
+                                             for run in runs]
+                             )
+    fd_part2 = make_list_str('dataNbVol',
+                             ['Run'] + available_runs,
+                             ['vol_scrubbed'] + [str(reports[run.subject_name]['runs'][run.run_name]['n_vol_after'])
+                                                 for run in runs],
+                             ['vol_ok'] + [str(reports[run.subject_name]['runs'][run.run_name]['n_vol_before'])
+                                           for run in runs]
+                             )
+    fd_str = '\n'.join((fd_part1, fd_part2))
+
+    chart_brain_str = make_list_str('dataIntra',
+                                    ['Run'] + available_runs,
+                                    ['corr_target'] + [str(reports[run.subject_name]['runs'][run.run_name]['corr_run_ref'])
+                                                       for run in runs]
+                                    )
+
+    bold_part1 = make_list_str('dataBOLD',
+                               ['Subject'] + available_subjects,
+                               ['corr_target'] + [str(reports[sub.subject_name]['corr_BOLD_T1'])
+                                                  for sub in subjects]
+                               )
+    bold_part2 = make_list_str('dataBrain',
+                               ['Subject'] + available_subjects,
+                               ['overlap_brain'] + [str(reports[sub.subject_name]['ovlp_BOLD_T1'])
+                                                    for sub in subjects]
+                               )
+    chart_bold_str = '\n'.join((bold_part1, bold_part2))
+
+    anat_part1 = make_list_str('dataT1',
+                               ['Subject'] + available_subjects,
+                               ['corr_target'] + [str(reports[sub.subject_name]['corr_T1_stereo'])
+                                                  for sub in subjects]
+                               )
+    anat_part2 = make_list_str('dataOverlapT1',
+                               ['Subject'] + available_subjects,
+                               ['overlap_brain'] + [str(reports[sub.subject_name]['ovlp_T1_stereo'])
+                                                    for sub in subjects]
+                               )
+    chart_t1_str = '\n'.join((anat_part1, anat_part2))
+
+    # Store the outputs
+    asset_p = report_p / 'assets'
+    ol = get_report_lookup()
+    for sub in subjects:
+        for run in sub.runs:
+            run_str = make_run_str(reports[run.subject_name]['runs'][run.run_name])
+            run_name = f'{run.subject_name}_{run.run_name}'
+            with open(asset_p  / ol['dataMotion'].format(run_name), 'w') as f:
+                f.write(run_str)
+
+    with open(asset_p  / ol['listSubject'], 'w') as f:
+        f.write(subject_list_str)
+
+    with open(asset_p  / ol['listRun'], 'w') as f:
+        f.write(run_list_str)
+
+    with open(asset_p  / ol['chartBOLD'], 'w') as f:
+        f.write(chart_bold_str)
+
+    with open(asset_p  / ol['chartBrain'], 'w') as f:
+        f.write(chart_brain_str)
+
+    with open(asset_p  / ol['chartT1'], 'w') as f:
+        f.write(chart_t1_str)
+
+    with open(asset_p  / ol['fd'], 'w') as f:
+        f.write(fd_str)
+
+    fig_func_group_average.savefig(str(asset_p / ol['fig_avg_func']), dpi=300)
+    fig_func_group_mask.savefig(str(asset_p / ol['fig_mask_func']), dpi=300)
+    fig_func_group_mask_average.savefig(str(asset_p / ol['fig_avg_mask_func']), dpi=300)
+    fig_t1_group_average.savefig(str(asset_p / ol['fig_avg_t1']), dpi=300)
+    fig_template.savefig(str(asset_p / ol['fig_template']), dpi=300)
+    fig_template_outline.savefig(str(asset_p / ol['fig_template_outline']), dpi=300)
+
+    return subjects
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("preproc_dir", type=str,
@@ -372,8 +617,14 @@ if __name__ == "__main__":
                         help="Specify the subject you want to run on. Only works when mode = subject.")
     args = parser.parse_args()
     if args.mode == 'detect':
-        find_available_subjects(args.preproc_dir, args.raw_dir, args.output_path)
+        find_available_subjects(pal.Path(args.preproc_dir),
+                                pal.Path(args.raw_dir),
+                                pal.Path(args.output_path))
     if args.mode == 'subject':
-        process_subject(args.preproc_dir, args.raw_dir, args.subject)
+        process_subject(pal.Path(args.preproc_dir),
+                        pal.Path(args.raw_dir),
+                        args.subject)
     if args.mode == 'dashboard':
-        raise Exception('The dashboard generator is not available yet.')
+        generate_dashboard(pal.Path(args.preproc_dir),
+                           pal.Path(args.raw_dir),
+                           pal.Path(args.output_path))
