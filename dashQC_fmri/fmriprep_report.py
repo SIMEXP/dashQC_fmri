@@ -1,5 +1,6 @@
 import re
 import json
+import time
 import shutil
 import warnings
 import argparse
@@ -172,7 +173,8 @@ def get_report_lookup():
                      'fig_run_ref_raw': 'motion/images/target_native_{}.png',
                      'fig_run_ref_prep': 'motion/images/target_stereo_{}.png',
                      'fig_run_mot_raw': 'motion/images/motion_native_{}.png',
-                     'fig_run_mot_prep': 'motion/images/motion_stereo_{}.png'
+                     'fig_run_mot_prep': 'motion/images/motion_stereo_{}.png',
+                     'report_timestamp': 'registration/js/datasetID.js'
                      }
     return report_lookup
 
@@ -202,6 +204,7 @@ def populate_report(report_p, clobber=False):
         'assets/motion/images',
         'assets/motion/js',
         'assets/registration/images',
+        'assets/registration/js',
         'assets/summary/js',
     ]
 
@@ -594,25 +597,25 @@ def generate_dashboard(prep_p, raw_p, report_p, clobber=True):
         for run in sub.runs:
             run_str = make_run_str(reports[run.subject_name]['runs'][run.run_name])
             run_name = f'{run.subject_name}_{run.run_name}'
-            with open(asset_p  / ol['dataMotion'].format(run_name), 'w') as f:
+            with open(asset_p / ol['dataMotion'].format(run_name), 'w') as f:
                 f.write(run_str)
 
-    with open(asset_p  / ol['listSubject'], 'w') as f:
+    with open(asset_p / ol['listSubject'], 'w') as f:
         f.write(subject_list_str)
 
-    with open(asset_p  / ol['listRun'], 'w') as f:
+    with open(asset_p / ol['listRun'], 'w') as f:
         f.write(run_list_str)
 
-    with open(asset_p  / ol['chartBOLD'], 'w') as f:
+    with open(asset_p / ol['chartBOLD'], 'w') as f:
         f.write(chart_bold_str)
 
-    with open(asset_p  / ol['chartBrain'], 'w') as f:
+    with open(asset_p / ol['chartBrain'], 'w') as f:
         f.write(chart_brain_str)
 
-    with open(asset_p  / ol['chartT1'], 'w') as f:
+    with open(asset_p / ol['chartT1'], 'w') as f:
         f.write(chart_t1_str)
 
-    with open(asset_p  / ol['fd'], 'w') as f:
+    with open(asset_p / ol['fd'], 'w') as f:
         f.write(fd_str)
 
     # Save figure data
@@ -623,7 +626,11 @@ def generate_dashboard(prep_p, raw_p, report_p, clobber=True):
     fig_template.savefig(str(asset_p / ol['fig_template']), dpi=300)
     fig_template_outline.savefig(str(asset_p / ol['fig_template_outline']), dpi=300)
 
-    return subjects
+    # Create timestamp data for the dashboard
+    with open(asset_p / ol['report_timestamp'], 'w') as f:
+        data_id = {'data': time.strftime("%Y-%m-%d-%H:%M:%S"),
+                   'timestamp': time.time() }
+        f.write(f'var datasetID = {json.dumps(data_id)};')
 
 
 if __name__ == "__main__":
