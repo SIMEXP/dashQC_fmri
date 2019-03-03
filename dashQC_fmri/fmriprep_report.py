@@ -371,6 +371,7 @@ def make_run_str(run_report):
 
 
 def report_run(run):
+    # TODO remove first nan from FD
     conf = pd.read_csv(run.confounds_f, sep='\t')
     # First add motion parameters
     report = {f'{cat}_{axis}': list(conf[f'{cat}_{axis}'].values.astype(float))
