@@ -1,5 +1,6 @@
 import re
 import json
+import shutil
 import warnings
 import argparse
 import numpy as np
@@ -164,7 +165,14 @@ def get_report_lookup():
                      'fig_mask_func': 'group/images/mask_func_group_stereotaxic.png',
                      'fig_avg_t1': 'group/images/average_t1_stereotaxic.png',
                      'fig_template': 'group/images/template_stereotaxic.png',
-                     'fig_template_outline': 'group/images/template_stereotaxic_raw.png'
+                     'fig_template_outline': 'group/images/template_stereotaxic_raw.png',
+                     'fig_sub_func_reg': 'registration/images/{}_func.png',
+                     'fig_sub_anat_reg': 'registration/images/{}_anat_raw.png',
+                     'fig_sub_anat_reg_outline': 'registration/images/{}_anat.png',
+                     'fig_run_ref_raw': 'motion/images/target_native_{}.png',
+                     'fig_run_ref_prep': 'motion/images/target_stereo_{}.png',
+                     'fig_run_mot_raw': 'motion/images/motion_native_{}.png',
+                     'fig_run_mot_prep': 'motion/images/motion_stereo_{}.png'
                      }
     return report_lookup
 
@@ -487,7 +495,13 @@ def generate_dashboard(prep_p, raw_p, report_p, clobber=True):
         else:
             warnings.warn(f'{sub_name} is not finished yet in {prep_p}')
 
-    # Obtain group level images
+    # Get the corresponding runs
+    runs = [run for sub in subjects for run in sub.runs]
+    available_runs = [f'{run.subject_name}_{run.run_name}' for run in runs]
+    reports = {sub.subject_name: json.loads(sub.report_f.read_text())
+               for sub in subjects}
+
+    # Generate group level data
     t1_group_average = average_image([sub.anat_f for sub in subjects])
     func_group_average = average_image([sub.func_f for sub in subjects])
     func_group_mask_average = average_image([sub.func_mask_f for sub in subjects])
@@ -496,7 +510,7 @@ def generate_dashboard(prep_p, raw_p, report_p, clobber=True):
                                       affine=func_group_mask_average.affine,
                                       header=func_group_mask_average.header)
 
-    # Generate figures
+    # Generate group level figures
     temp = get_template()
     fig_t1_group_average = make_reg_montage(t1_group_average,
                                             overlay=temp['outline'],
@@ -509,13 +523,7 @@ def generate_dashboard(prep_p, raw_p, report_p, clobber=True):
                                             cmap=plt.cm.Greys_r)
     fig_template = make_reg_montage(temp['T1'], cmap=plt.cm.Greys_r)
 
-    # Get the corresponding runs
-    runs = [run for sub in subjects for run in sub.runs]
-    available_runs = [f'{run.subject_name}_{run.run_name}' for run in runs]
-    reports = {sub.subject_name: json.loads(sub.report_f.read_text())
-               for sub in subjects}
-
-    # Generate js files
+    # Generate js data
     subject_list_str = make_dict_str('listSubject', available_subjects)
     run_list_str = make_dict_str('dataRun', available_runs)
 
@@ -565,9 +573,23 @@ def generate_dashboard(prep_p, raw_p, report_p, clobber=True):
                                )
     chart_t1_str = '\n'.join((anat_part1, anat_part2))
 
-    # Store the outputs
+    # Copy pregenerated images to the repository
     asset_p = report_p / 'assets'
     ol = get_report_lookup()
+    for sub in subjects:
+        sub_name = sub.subject_name
+        shutil.copyfile(sub.fig_anat_reg_f, asset_p / ol['fig_sub_anat_reg'].format(sub_name))
+        shutil.copyfile(sub.fig_anat_reg_outline_f, asset_p / ol['fig_sub_anat_reg_outline'].format(sub_name))
+        shutil.copyfile(sub.fig_func_reg_f, asset_p / ol['fig_sub_func_reg'].format(sub_name))
+
+        for run in sub.runs:
+            run_name = f'{sub_name }_{run.run_name}'
+            shutil.copyfile(run.fig_func_ref_f, asset_p / ol['fig_run_ref_prep'].format(run_name))
+            shutil.copyfile(run.fig_func_ref_raw_f, asset_p / ol['fig_run_ref_raw'].format(run_name))
+            shutil.copyfile(run.fig_mot_f, asset_p / ol['fig_run_mot_prep'].format(run_name))
+            shutil.copyfile(run.fig_mot_raw_f, asset_p / ol['fig_run_mot_raw'].format(run_name))
+
+    # Save js data
     for sub in subjects:
         for run in sub.runs:
             run_str = make_run_str(reports[run.subject_name]['runs'][run.run_name])
@@ -593,6 +615,7 @@ def generate_dashboard(prep_p, raw_p, report_p, clobber=True):
     with open(asset_p  / ol['fd'], 'w') as f:
         f.write(fd_str)
 
+    # Save figure data
     fig_func_group_average.savefig(str(asset_p / ol['fig_avg_func']), dpi=300)
     fig_func_group_mask.savefig(str(asset_p / ol['fig_mask_func']), dpi=300)
     fig_func_group_mask_average.savefig(str(asset_p / ol['fig_avg_mask_func']), dpi=300)
