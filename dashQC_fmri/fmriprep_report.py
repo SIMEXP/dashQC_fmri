@@ -441,6 +441,7 @@ def find_available_subjects(prep_p, raw_p, subject_list_f=None):
 
 def process_subject(prep_p, raw_p, subject_name, clobber=True):
     sub = Subject(prep_p, raw_p, subject_name, get_name_lookup())
+    temp = get_template()
     # Check if the outputs are already generated
     if sub.check_outputs_done() and not clobber:
         raise Exception(f'Some subject-level outputs for {sub.subject_name} are already done. '
@@ -450,7 +451,7 @@ def process_subject(prep_p, raw_p, subject_name, clobber=True):
                         'Force clobber if you want to overwrite them')
 
     # Generate subject level outputs
-    fig_anat_reg_outline = make_reg_montage(sub.anat_f, cmap=plt.cm.Greys_r)  # Outline overlay is missing
+    fig_anat_reg_outline = make_reg_montage(sub.anat_f, cmap=plt.cm.Greys_r, overlay=temp['outline']) 
     fig_anat_reg = make_reg_montage(sub.anat_f, cmap=plt.cm.Greys_r)
     fig_func_reg = make_reg_montage(sub.func_f)
     report = report_subject(sub)
@@ -518,8 +519,7 @@ def generate_dashboard(prep_p, raw_p, report_p, clobber=True):
     fig_t1_group_average = make_reg_montage(t1_group_average,
                                             overlay=temp['outline'],
                                             cmap=plt.cm.Greys_r)
-    fig_func_group_average = make_reg_montage(func_group_average,
-                                            overlay=temp['outline'])
+    fig_func_group_average = make_reg_montage(func_group_average)
     fig_func_group_mask_average = make_reg_montage(func_group_mask_average)
     fig_func_group_mask = make_reg_montage(func_group_mask)
     fig_template_outline = make_reg_montage(temp['T1'], overlay=temp['outline'],
