@@ -451,7 +451,7 @@ def process_subject(prep_p, raw_p, subject_name, clobber=True):
                         'Force clobber if you want to overwrite them')
 
     # Generate subject level outputs
-    fig_anat_reg_outline = make_reg_montage(sub.anat_f, cmap=plt.cm.Greys_r, overlay=temp['outline']) 
+    fig_anat_reg_outline = make_reg_montage(sub.anat_f, cmap=plt.cm.Greys_r, overlay=temp['outline'])
     fig_anat_reg = make_reg_montage(sub.anat_f, cmap=plt.cm.Greys_r)
     fig_func_reg = make_reg_montage(sub.func_f)
     report = report_subject(sub)
