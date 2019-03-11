@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pathlib as pal
 import nibabel as nib
+import subprocess as sb
 from distutils import dir_util
 from nilearn import image as ni
 from matplotlib import gridspec
@@ -24,8 +25,8 @@ class DataInput(object):
     def _find_path(folder, pattern):
         search = list(folder.glob(pattern))
         if not len(search) == 1:
-            raise FileNotFoundError(
-                f'I found {len(search)} hits for {pattern} in {folder}. There needs to be exactly one match')
+            raise FileNotFoundError(f'I found {len(search)} hits for {pattern} in {folder}. '
+                                    f'There needs to be exactly one match')
         return search[0]
 
     def check_outputs_done(self):
@@ -52,12 +53,19 @@ class Subject(DataInput):
         self.func_raw_d = self._find_path(self.raw_d, self.nl['func_raw_d'])
         self.anat_f = self._find_path(self.anat_d,
                                       self.nl['anat_pre_f'].format(self.subject_name))
+        self.anat_skull_f = self._find_path(self.anat_d,
+                                            self.nl['anat_skull_pre_f'].format(self.subject_name))
+        self.anat_transform_f = self._find_path(self.anat_d,
+                                                self.nl['anat_to_stand_transform_f'].format(self.subject_name))
         self.func_f = self._find_path(self.func_d,
                                       self.nl['func_ref_pre_f'].format(self.subject_name, '*'))
         self.runs, self.run_names = self.find_runs()
 
         # Define outputs
         # Pasted subject names must be tuple for unpacking
+        self.img_anat_skull_f = self._set_path(self.fig_d,
+                                                     self.nl['img_anat_skull_pre_f'],
+                                                     (self.subject_name,))
         self.fig_anat_reg_outline_f = self._set_path(self.fig_d,
                                                      self.nl['fig_anat_reg_outline_f'],
                                                      (self.subject_name,))
@@ -70,7 +78,9 @@ class Subject(DataInput):
         self.report_f = self._set_path(self.fig_d,
                                        self.nl['report_f'],
                                        (self.subject_name,))
-        self.outputs = [self.fig_anat_reg_outline_f, self.fig_anat_reg_f, self.fig_func_reg_f, self.report_f]
+        self.outputs = [self.img_anat_skull_f, self.fig_anat_reg_outline_f,
+                        self.fig_anat_reg_f, self.fig_func_reg_f,
+                        self.report_f]
 
     def find_runs(self):
         run_names = list()
@@ -135,11 +145,14 @@ def get_name_lookup():
                    'func_mask_f': '{}_*_{}_space-*_desc-brain_mask.nii.gz',
                    'func_raw_d': 'func',
                    'anat_pre_f': '{}_*_desc-preproc_T1w.nii.gz',
+                   'anat_skull_pre_f': '{}_desc-preproc_T1w.nii.gz',
+                   'anat_to_stand_transform_f': '{}_from-T1w_to-*_mode-image_xfm.h5',
                    'func_ref_pre_f': '{}_*_{}_space-*_boldref.nii.gz',
                    'func_pre_f': '{}_*_{}_space-*_desc-preproc_bold.nii.gz',
                    'func_ref_raw_f': '{}_*_{}*.nii.gz',
                    'func_raw_f': '{}_*_{}*.nii.gz',
                    'confound_f': '{}_*_{}_desc-confounds_regressors.tsv',
+                   'img_anat_skull_pre_f': '{}_anat_skull.nii.gz',
                    'fig_anat_reg_outline_f': '{}_anat_reg_outline.png',
                    'fig_anat_reg_f': '{}_anat_reg.png',
                    'fig_func_reg_f': '{}_func_reg.png',
@@ -191,6 +204,24 @@ def get_template():
                         f'{[(key, template[key].exists()) for key in template.keys()]}')
 
     return template
+
+
+def apply_transform(sub):
+    command_result = sb.run(['antsApplyTransforms',
+                             '-i', sub.anat_skull_f,
+                             '-r', sub.anat_f,
+                             '-o', sub.img_anat_skull_f,
+                             '-t', sub.anat_transform_f],
+                            stderr=sb.PIPE, stdout=sb.PIPE, universal_newlines=True)
+    # Check if the command completed succesffuly
+    if command_result.returncode == 0:
+        return command_result.returncode
+    else:
+        # Something is bad
+        raise ChildProcessError(f'Running antsApplyTransform on {sub.subject_name} failed:\n'
+                                f'The command was:\n {" ".join([str(i) for i in command_result.args])}\n\n'
+                                f'This resulted in the following error message:\n'
+                                f'{command_result.stderr}')
 
 
 def populate_report(report_p, clobber=False):
@@ -449,10 +480,13 @@ def process_subject(prep_p, raw_p, subject_name, clobber=True):
     if all([run.check_outputs_done() for run in sub.runs]) and not clobber:
         raise Exception(f'Some run-level outputs for {sub.subject_name} are already done. '
                         'Force clobber if you want to overwrite them')
+    # Check specifically if the skull-anat file exists and run create it if not
+    if not sub.img_anat_skull_f.exists():
+        _ = apply_transform(sub)
 
     # Generate subject level outputs
-    fig_anat_reg_outline = make_reg_montage(sub.anat_f, cmap=plt.cm.Greys_r, overlay=temp['outline'])
-    fig_anat_reg = make_reg_montage(sub.anat_f, cmap=plt.cm.Greys_r)
+    fig_anat_reg_outline = make_reg_montage(sub.anat_skull_f, cmap=plt.cm.Greys_r, overlay=temp['outline'])
+    fig_anat_reg = make_reg_montage(sub.anat_skull_f, cmap=plt.cm.Greys_r)
     fig_func_reg = make_reg_montage(sub.func_f)
     report = report_subject(sub)
     # Store subject level outputs
@@ -652,6 +686,11 @@ if __name__ == "__main__":
                                 pal.Path(args.raw_dir),
                                 pal.Path(args.output_path))
     if args.mode == 'subject':
+        # Check if ANTs is setup correctly
+        if shutil.which('antsApplyTransformsns') is None:
+            raise EnvironmentError('ANTs does not seem to be correctly configured on your system. '
+                                   'Please make sure that ANTs is installed and that you can run '
+                                   '"antsApplyTransforms" from inside your command line.')
         process_subject(pal.Path(args.preproc_dir),
                         pal.Path(args.raw_dir),
                         args.subject)
