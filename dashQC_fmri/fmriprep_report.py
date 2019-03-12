@@ -485,8 +485,8 @@ def process_subject(prep_p, raw_p, subject_name, clobber=True):
         _ = apply_transform(sub)
 
     # Generate subject level outputs
-    fig_anat_reg_outline = make_reg_montage(sub.anat_skull_f, cmap=plt.cm.Greys_r, overlay=temp['outline'])
-    fig_anat_reg = make_reg_montage(sub.anat_skull_f, cmap=plt.cm.Greys_r)
+    fig_anat_reg_outline = make_reg_montage(sub.img_anat_skull_f, cmap=plt.cm.Greys_r, overlay=temp['outline'])
+    fig_anat_reg = make_reg_montage(sub.img_anat_skull_f, cmap=plt.cm.Greys_r)
     fig_func_reg = make_reg_montage(sub.func_f)
     report = report_subject(sub)
     # Store subject level outputs
@@ -687,7 +687,7 @@ if __name__ == "__main__":
                                 pal.Path(args.output_path))
     if args.mode == 'subject':
         # Check if ANTs is setup correctly
-        if shutil.which('antsApplyTransformsns') is None:
+        if shutil.which('antsApplyTransforms') is None:
             raise EnvironmentError('ANTs does not seem to be correctly configured on your system. '
                                    'Please make sure that ANTs is installed and that you can run '
                                    '"antsApplyTransforms" from inside your command line.')
