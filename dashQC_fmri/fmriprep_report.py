@@ -455,12 +455,14 @@ def find_available_subjects(prep_p, raw_p, subject_list_f=None):
     potential_subjects = [str(query.relative_to(prep_p))
                           for query in prep_p.glob('sub-*') if query.is_dir()]
     available_subjects = list()
-    for sub_name in potential_subjects:
+    n_potential = len(potential_subjects)
+    for sub_id, sub_name in enumerate(potential_subjects):
         try:
             sub = Subject(prep_p, raw_p, sub_name, get_name_lookup())
             available_subjects.append(sub_name)
         except FileNotFoundError:
-            warnings.warn(f'Could not find all data for subject {sub_name} in {prep_p}')
+            warnings.warn(f'Could not find all data for subject {sub_name} in {prep_p}. '
+                          f'subject {sub_id} / {n_potential}')
 
     if subject_list_f is not None:
         with subject_list_f.open(mode='w') as f:
