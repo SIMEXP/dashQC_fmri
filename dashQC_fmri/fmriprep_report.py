@@ -37,7 +37,7 @@ class Subject(DataInput):
     def __init__(self, preproc_d, raw_d, subject_name, nl):
         self.nl = nl
         self.prep_d = pal.Path(preproc_d) / subject_name
-        self.raw_d = pal.Path(raw_d) / subject_name
+        self.raw_d = self._find_path(raw_d, f'**/{subject_name}')
         self.subject_name = subject_name
 
         # Define paths
