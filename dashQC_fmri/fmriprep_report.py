@@ -680,7 +680,7 @@ if __name__ == "__main__":
                              "Depending on the mode, this should be either a directory name or a path to a text file.")
     parser.add_argument("-s", "--subject", type=str,
                         help="Specify the subject you want to run on. Only works when mode = subject.")
-    parser.add_argument("-c", "--clobber", type=bool,
+    parser.add_argument("-c", "--clobber", type=bool, default=False,
                         help="If set to 'True', existing outputs will be overwritten. Default is 'False'.")
     args = parser.parse_args()
     if args.mode == 'detect':
@@ -696,7 +696,7 @@ if __name__ == "__main__":
         process_subject(pal.Path(args.preproc_dir),
                         pal.Path(args.raw_dir),
                         args.subject,
-                        clobber=False)
+                        clobber=args.clobber)
     if args.mode == 'dashboard':
         generate_dashboard(pal.Path(args.preproc_dir),
                            pal.Path(args.raw_dir),
