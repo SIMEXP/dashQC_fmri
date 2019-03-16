@@ -29,8 +29,11 @@ class DataInput(object):
                                     f'There needs to be exactly one match')
         return search[0]
 
-    def check_outputs_done(self):
-        return all([p.exists() for p in self.outputs])
+    def check_outputs(self):
+        return [(p, p.exists()) for p in self.outputs]
+
+    def outputs_completed(self):
+        return all([(p, p.exists()) for p in self.outputs])
 
 
 class Subject(DataInput):
@@ -476,11 +479,11 @@ def process_subject(prep_p, raw_p, subject_name, clobber=True):
     sub = Subject(prep_p, raw_p, subject_name, get_name_lookup())
     temp = get_template()
     # Check if the outputs are already generated
-    if sub.check_outputs_done() and not clobber:
-        raise Exception(f'Some subject-level outputs for {sub.subject_name} are already done. '
+    if all(sub.outputs_completed()) and not clobber:
+        raise Exception(f'ALL subject-level outputs for {sub.subject_name} are already done. '
                         'Force clobber if you want to overwrite them')
-    if all([run.check_outputs_done() for run in sub.runs]) and not clobber:
-        raise Exception(f'Some run-level outputs for {sub.subject_name} are already done. '
+    if all([run.outputs_completed() for run in sub.runs]) and not clobber:
+        raise Exception(f'All run-level outputs for {sub.subject_name} are already done. '
                         'Force clobber if you want to overwrite them')
     # Check specifically if the skull-anat file exists and run create it if not
     if not sub.img_anat_skull_f.exists():
@@ -526,14 +529,17 @@ def generate_dashboard(prep_p, raw_p, report_p, clobber=True):
     for sub_name in potential_subjects:
         try:
             sub = Subject(prep_p, raw_p, sub_name, get_name_lookup())
-        except FileNotFoundError:
-            warnings.warn(f'Could not find all data for subject {sub_name} in {prep_p}')
+        except FileNotFoundError as e:
+            warnings.warn(f'Could not find all data for subject {sub_name} in {prep_p}:\n{e}')
             continue
-        if sub.check_outputs_done():
+        output_test = sub.check_outputs()
+        output_paths, output_available = zip(*output_test)
+        if all(output_available):
             available_subjects.append(sub_name)
             subjects.append(sub)
         else:
-            warnings.warn(f'{sub_name} is not finished yet in {prep_p}')
+            missing_paths = [path for path, available in output_test if not available]
+            warnings.warn(f'{sub_name} is not finished yet in {prep_p}:\n    {missing_paths}')
 
     # Get the corresponding runs
     runs = [run for sub in subjects for run in sub.runs]
