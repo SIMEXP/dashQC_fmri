@@ -33,7 +33,7 @@ class DataInput(object):
         return [(p, p.exists()) for p in self.outputs]
 
     def outputs_completed(self):
-        return all([(p, p.exists()) for p in self.outputs])
+        return all([p.exists() for p in self.outputs])
 
 
 class Subject(DataInput):
