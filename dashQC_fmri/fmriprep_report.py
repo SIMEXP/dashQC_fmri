@@ -544,9 +544,13 @@ def generate_dashboard(prep_p, raw_p, report_p, clobber=True):
         if all(output_available) and all(runs_available):
             available_subjects.append(sub_name)
             subjects.append(sub)
+        elif all(output_available) and not all(runs_available):
+            run_names, run_status= zip(*[(run.run_name, run.outputs_completed()) for run in sub.runs])
+            missing_runs = [run_name for rid, run_name in enumerate(run_names) if not run_status[rid]]
+            warnings.warn(f'{sub_name} is missing run level information:\n    {missing_runs}')
         else:
             missing_paths = [path for path, available in output_test if not available]
-            warnings.warn(f'{sub_name} is not finished yet in {prep_p}:\n    {missing_paths}')
+            warnings.warn(f'{sub_name} is missing both run and subject level information:\n    {missing_paths}')
 
     # Get the corresponding runs
     runs = [run for sub in subjects for run in sub.runs]
