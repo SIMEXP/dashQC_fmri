@@ -298,10 +298,13 @@ def make_reg_montage(data_in, overlay=None, cmap=nlp.cm.black_red):
         return f_montage
 
 
-def motion_figure(img_path, x=3, y=1, cmap=nlp.cm.black_red):
+def motion_figure(img_path, x=3, y=1, cmap=nlp.cm.black_red, crop=False):
     # Load the image
     data_img = nib.load(str(img_path))
-    n_t = data_img.shape[3]
+    if crop:
+        n_t = 50
+    else:
+        n_t = data_img.shape[3]
 
     vmin = np.percentile(data_img.get_data(), 1)
     vmax = np.percentile(data_img.get_data(), 99.9)
@@ -506,8 +509,8 @@ def process_subject(prep_p, raw_p, subject_name, clobber=True):
     for run in sub.runs:
         fig_func_ref_raw = target_figure(run.func_ref_raw_f)
         fig_func_ref = target_figure(run.func_ref_prep_f)
-        fig_mot_raw = motion_figure(run.func_raw_f)
-        fig_mot = motion_figure(run.func_prep_f)
+        fig_mot_raw = motion_figure(run.func_raw_f, crop=True)
+        fig_mot = motion_figure(run.func_prep_f, crop=True)
 
         fig_func_ref_raw.savefig(run.fig_func_ref_raw_f, dpi=100)
         fig_func_ref.savefig(run.fig_func_ref_f, dpi=100)
