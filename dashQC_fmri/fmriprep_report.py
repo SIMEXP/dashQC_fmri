@@ -480,8 +480,9 @@ def process_subject(prep_p, raw_p, subject_name, clobber=True):
     temp = get_template()
     # Check if the outputs are already generated
     if sub.outputs_completed() and not clobber:
+        output_test = sub.check_outputs()
         raise Exception(f'ALL subject-level outputs for {sub.subject_name} are already done. '
-                        'Force clobber if you want to overwrite them')
+                        f'Force clobber if you want to overwrite them:\n{output_test}')
     if all([run.outputs_completed() for run in sub.runs]) and not clobber:
         raise Exception(f'All run-level outputs for {sub.subject_name} are already done. '
                         'Force clobber if you want to overwrite them')
