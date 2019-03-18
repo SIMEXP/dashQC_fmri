@@ -536,9 +536,12 @@ def generate_dashboard(prep_p, raw_p, report_p, clobber=True):
         except FileNotFoundError as e:
             warnings.warn(f'Could not find all data for subject {sub_name} in {prep_p}:\n{e}')
             continue
+        # Check Subject level outputs
         output_test = sub.check_outputs()
         output_paths, output_available = zip(*output_test)
-        if all(output_available):
+        # Check Run level outputs
+        runs_available = [run.outputs_completed() for run in sub.runs]
+        if all(output_available) and all(runs_available):
             available_subjects.append(sub_name)
             subjects.append(sub)
         else:
