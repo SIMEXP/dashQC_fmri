@@ -33,6 +33,7 @@ def populate_report(report_p):
         'assets/motion/images',
         'assets/motion/js',
         'assets/registration/images',
+        'assets/registration/js',
         'assets/summary/js',
     ]
     for branch in tree_structure:
@@ -128,7 +129,7 @@ if "__main__" == __name__:
 
     parser = argparse.ArgumentParser()
     parser.add_argument("preproc_dir", type=str,
-                        help="path to the directory with the niak preprocessed data")
+                        help="path to the dire/mnt/data_sq/cisl/surchs/ABIDE/ABIDE_1/PREPROCESS_NIAK/NYUctory with the niak preprocessed data")
     parser.add_argument("report_dir", type=str,
                         help="desired path for the report output")
     args = parser.parse_args()
