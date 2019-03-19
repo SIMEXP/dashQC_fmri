@@ -99,8 +99,8 @@ def make_report(preproc_dir, report_dir):
     # motion/*.html -> assets/motion/html
     # motion/*.png -> assets/motion/images
     # motion/*.js -> assets/motion/js
-    copy_all_files(preproc_dir + "motion{0}*.html".format(os.sep),
-                   report_dir + "assets{0}motion{0}html".format(os.sep))
+    #copy_all_files(preproc_dir + "motion{0}*.html".format(os.sep),
+    #               report_dir + "assets{0}motion{0}html".format(os.sep))
     copy_all_files(preproc_dir + "motion{0}*.png".format(os.sep),
                    report_dir + "assets{0}motion{0}images".format(os.sep))
     copy_all_files(preproc_dir + "motion{0}*.js".format(os.sep),
