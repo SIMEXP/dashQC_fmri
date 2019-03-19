@@ -7,6 +7,8 @@ Script for copying NIAK fMRI preprocessing report output into new folder structu
 """
 
 import os
+import time
+import json
 import glob
 import shutil
 import inspect
