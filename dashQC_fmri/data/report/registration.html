@@ -11,6 +11,12 @@
 
     <style>
 
+        /* Opacity of canvas itself set due to HTML5 globalAlpha drawing bug */
+        canvas {
+
+            opacity: 0.7;
+        }        
+
         .sliderNext {
 
             position: absolute;
@@ -53,16 +59,24 @@
 
             display: inline-block;
         }
-        .register img:hover {
+        /* .register img:hover {
 
-            /*animation: flickerAnimation 1s infinite alternate ease-in-out;*/
             animation-name: flickerAnimation;
             animation-duration: 1s;
             animation-iteration-count: 1;
             animation-direction: normal;
             animation-timing-function: ease-in-out;
             animation-fill-mode: both;
-        }
+        }*/
+        .reg_img_hover {
+
+            animation-name: flickerAnimation;
+            animation-duration: 1s;
+            animation-iteration-count: infinite;
+            animation-direction: alternate;
+            animation-timing-function: ease-in-out;
+            animation-fill-mode: both;
+        }        
 
         .button_hotkey_letter {
 
@@ -74,14 +88,15 @@
             text-align: center;
         }
 
-        #registration-pass, #registration-maybe, #registration-fail, #registration-unmark {
+        #registration-pass, #registration-maybe, #registration-fail, #registration-unmark,
+        #registration-undo-point, #registration-clear-points {
 
             box-shadow: 0 2px 4px -1px rgba(0,0,0,0.1),
                         0 4px 5px 0 rgba(0,0,0,0.1),
                         0 1px 10px 0 rgba(0,0,0,0.12) !important;
         }
 
-        #registration-unmark {
+        #registration-unmark, #registration-undo-point, #registration-clear-points {
 
             background-color: #A1A1A1;
             border-color: #A1A1A1;
@@ -93,6 +108,28 @@
             background-color: #808080;
             border-color: #808080;
         }
+
+        /* Styling for T1 registration image error painting */
+        #cs-reg-img { 
+            width:256px; height:256px; 
+            margin:20px 60px; 
+            border:1px solid blue;
+        }
+        #T1-indVsTemplate { 
+            /*width:100%;*/
+            height:100%; 
+            position:relative;
+        }
+        #T1-img { 
+            /*width:100%; height:100%; */
+            position:absolute; top:0px; left:0px;
+        }
+        #T1-canvas { 
+            /*width:70%; height:70%; */
+            position: absolute; 
+            top:0px; left:0px;
+            /*background-color: rgba(255,0,0,.1);*/
+        }         
 
     </style>
 
@@ -137,7 +174,7 @@
                 <ul class="nav navbar-nav navbar-left">
 
                     <li class="navbar_item"><a href="index.html">Summary</a></li>
-                    <li class="navbar_item navbar-brand-current"><a href="registration_new.html">Registration</a></li>
+                    <li class="navbar_item navbar-brand-current"><a href="registration.html">Registration</a></li>
                     <li class="navbar_item"><a href="motion.html">Motion</a></li>
 
                 </ul>
@@ -174,18 +211,19 @@
             <!-- Individual vs template T1 scan for subject -->
             <div class="col-sm-6">
 
-                <div class="chart-wrapper">
+                <div class="chart-wrapper" id="t1-chart-wrapper">
 
                     <div class="chart-title" id="t1-chart-title">
                         Individual vs template T1 scan for subject
                         <!-- <select class=#subject-select" style="width: 50%"></select> -->
                     </div>
 
-                    <div class="chart-stage cs-reg-img">
+                    <div class="chart-stage cs-reg-img" id="t1-chart-stage">
 
                         <div id="T1-indVsTemplate" class="register">
-                            <img class="T1 montage">
-                        </div>
+                            <img class="T1 montage" id="T1-img">
+                            <canvas id="T1-canvas"></canvas>
+                        </div>                      
 
                         <img class="sliderNext" src="lib/jsImageSlider/navbuttons.png" >
                         <img class="sliderPrev" src="lib/jsImageSlider/navbuttons.png" >
@@ -211,7 +249,7 @@
                     <div class="chart-stage cs-reg-img">
 
                         <div id="boldVsT1" class="register">
-                            <img class="BOLD montage">
+                            <img class="BOLD montage" id="BOLD-img">
                         </div>
 
                         <img class="sliderNext" src="lib/jsImageSlider/navbuttons.png" >
@@ -226,6 +264,15 @@
 
             </div>
 
+        </div>
+
+        <!-- QC Click Controls -->
+        <div class="row" style="margin: 1em 0 1em 1em;">
+            <div class="col-sm-3">
+                <button type="button" class="btn btn-md" id="registration-undo-point" style="margin-right: 1em;  min-width: 8em;" disabled>Undo Point</button>
+                <button type="button" class="btn btn-md" id="registration-clear-points" style="margin-right: 1em;  min-width: 8em;" disabled>Clear Points</button>
+            </div>
+            <div class="col-sm-9"></div>
         </div>
 
         <!-- Comment form and registration qc buttons -->
@@ -358,7 +405,8 @@
     <!-- Select 2 -->
     <script src="lib/select2/select2.min.js"></script>
 
-    <!-- Custom external scripts -->
+    
+    <!-- Data in JS form -->
 
     <!-- Description of input files and options -->
     <script type="text/javascript" src="assets/summary/js/filesIn.js"></script>
@@ -369,11 +417,18 @@
     <!-- Unique ID(s) for this dataset -->
     <script src="assets/registration/js/datasetID.js"></script>
 
-    <!-- QC Dashboard Objects -->
+
+    <!-- Custom external scripts -->
+
+    <!-- DashQC Objects -->
     <script type="text/javascript" src="assets/general/js/qc_dash_objects.js"></script>
+
+
 
     <!-- Live reload - for development use only -->
     <!-- <script>document.write('<script src="http://' + (location.host || '${1:localhost}').split(':')[0] + ':${2:35729}/livereload.js?snipver=1"></' + 'script>')</script> -->
+
+
 
     <!-- Main script -->
     <script>
@@ -433,10 +488,161 @@
             FAIL_LOWERCASE: 102
         };
 
+        // Element IDs
+        const elementIDs = {
+
+            boldDiv: "boldVsT1",
+            boldImg: "BOLD-img",
+            t1ChartWrapper: "t1-chart-wrapper",
+            t1ChartStage: "t1-chart-stage",
+            t1ChartTitle: "t1-chart-title",
+            t1Div: "T1-indVsTemplate",
+            t1Img: "T1-img",
+            t1Canvas: "T1-canvas",
+
+            undoPointsButton: "registration-undo-point",
+            clearPointsButton: "registration-clear-points"            
+        };
+
+        // QC clicked points characteristics
+        const qcPoints = {
+
+            alpha: 0.7,
+            color: "rgb(255,221,87)",
+            radius: 8,
+            width: 3,
+
+            startAngle: 0,
+            endAngle: 2 * Math.PI
+        };        
+
         var webStorageElement = null;
 
         // Perform when all have loaded
         $(document).ready(function() {
+
+            // === Registration Image Functions === //
+
+            function clearPoints() {
+
+                console.log("clearPoints");
+
+                let canvas = document.getElementById(elementIDs.t1Canvas);
+                let canvasContext = canvas.getContext("2d");
+
+                // 1. Clear all points from the canvas
+                canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+
+                // 2. Clear all points from the current subject
+                webStorageElement.clearPoints();
+
+                // 3. Disable undo and clear buttons
+                document.getElementById(elementIDs.undoPointsButton).setAttribute("disabled", "disabled");
+                document.getElementById(elementIDs.clearPointsButton).setAttribute("disabled", "disabled");
+
+            }
+
+            // Draws mark on point clicked in registration image
+            function drawDot(p_x, p_y, p_imageID, p_canvasID){
+
+                var image = document.getElementById(p_imageID);
+                var canvas = document.getElementById(p_canvasID);
+
+                // Adjust canvas coordinate system to match underlying image
+                canvas.style.position = "absolute";
+                canvas.style.left = image.offsetLeft + "px";
+                canvas.style.top = image.offsetTop + "px";
+
+                // Draw circular mark on the canvas
+                var canvasContext = canvas.getContext("2d");
+                canvasContext.imageSmoothingEnabled = true;
+                // canvasContext.globalAlpha = qcPoints.alpha;
+                canvasContext.lineWidth = qcPoints.width;
+                canvasContext.strokeStyle = qcPoints.color;                
+                canvasContext.beginPath();
+                canvasContext.arc(p_x, p_y, 
+                                  qcPoints.radius, 
+                                  qcPoints.startAngle, qcPoints.endAngle,
+                                  false);
+                canvasContext.stroke();
+            }
+
+            // Draws a dot on the corresponding registration image and records the point for session storage
+            function recordPointClick(p_event) {
+
+                // 'this' in this context should be the tag with this assigned click event
+
+                // let t1ImgDOM = document.getElementById(elementIDs.t1Img);
+                // let t1ChartWrapper = document.getElementById(elementIDs.t1ChartWrapper);
+                // let t1ChartStage = document.getElementById(elementIDs.t1ChartStage);
+                // let t1ChartTitle = document.getElementById(elementIDs.t1ChartTitle);
+                // let t1DivDOM = document.getElementById(elementIDs.t1Div);
+
+                // var x = p_event.pageX - t1ChartWrapper.offsetLeft - t1ChartStage.offsetLeft - t1DivDOM.offsetLeft - t1ImgDOM.offsetLeft;
+                // var y = p_event.pageY - t1ChartWrapper.offsetTop - t1ChartStage.offsetTop - t1ChartTitle.offsetTop - t1DivDOM.offsetTop - t1ImgDOM.offsetTop;
+
+
+                let t1Canvas = document.getElementById(elementIDs.t1Canvas);
+
+                var rect = t1Canvas.getBoundingClientRect();
+                var x = p_event.clientX - rect.left;
+                var y = p_event.clientY - rect.top;
+
+                // Draw point
+                //drawX(x, y, xLength, xColor, canvasID);
+                drawDot(x, y, elementIDs.t1Img, elementIDs.t1Canvas);
+
+                // Record point for current subject into local and web storage
+                webStorageElement.addPoint(x, y);
+
+                // Enable the undo and clear buttons
+                document.getElementById(elementIDs.undoPointsButton).removeAttribute("disabled");
+                document.getElementById(elementIDs.clearPointsButton).removeAttribute("disabled");
+            }
+
+            // Redraws points onto registration image
+            function redrawAllPoints(p_ignoreDrawStatus) {
+
+                // console.log("redrawAllPoints");
+                // console.log("number of points for subject " + webStorageElement.m_currentSubject + " " + webStorageElement.points.length);
+
+                let subjectPoints = webStorageElement.points;
+                for ( let index = 0; index < subjectPoints.length; index++ ){
+
+                    // Already drawn check
+                    if ( p_ignoreDrawStatus || !subjectPoints[index][2] ) {
+
+                        subjectPoints[index][2] = true;
+                        drawDot(subjectPoints[index][0], subjectPoints[index][1],
+                                elementIDs.t1Img, elementIDs.t1Canvas);
+                    }
+                }
+            }
+
+            // Removes last drawn point
+            function undoLastPoint() {
+
+                // 1. Clear all points from the canvas
+                let canvas = document.getElementById(elementIDs.t1Canvas);
+                let canvasContext = canvas.getContext("2d");                
+                canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+
+                // 2. Remove the last drawn point from the current subject's point list
+                webStorageElement.removeLastPoint();
+
+                // 3. Unmark all points as having been drawn
+                webStorageElement.unmarkPoints();
+
+                // 4. Redraw all points to the canvas
+                redrawAllPoints(false);
+
+                // 5. Disable undo and clear buttons if no more points left for the current subject
+                if ( 0 == webStorageElement.pointCount() ) {
+                    document.getElementById(elementIDs.undoPointsButton).setAttribute("disabled", "disabled");
+                    document.getElementById(elementIDs.clearPointsButton).setAttribute("disabled", "disabled");
+                }
+
+            }
 
             // === Functions === //
 
@@ -490,58 +696,32 @@
             // Moves on to the next subject
             function nextSubject() {
 
-                $es = $("#subject-select");
-                currId = $es.val();
-                currId = parseInt(currId);
+                // Get current subject list ID from subject select dropdown
+                let subjectListID = parseInt($("#subject-select").val());
 
-                if ( currId < listSubject.length ) {
+                // Increment list ID to next subject list ID or reset back to first subject list ID
+                subjectListID = ( subjectListID < listSubject.length ) ? subjectListID + 1 : 1;
 
-                    currId+=1;
-                } else {
-
-                    currId = 1;
-                }
-
-                var evt = {
-
-                    params: {
-
-                        data: {
-
-                            id: currId.toString()
-                        }
-                    }
-                };
-                switchSubjects(evt);
+                // Switch to registration image/QC status of subject with this list ID
+                switchSubjects({ params: { data: { id: subjectListID.toString() } } });
             }
 
             // Moves back to the previous subject
             function previousSubject() {
 
-                $es = $("#subject-select");
-                currId = $es.val();
-                currId = parseInt(currId);
+                // Get current subject list ID from subject select dropdown
+                let subjectListID = parseInt($("#subject-select").val());
 
-                if ( currId > 1 ) {
+                // Decrement list ID to previous subject list ID or reset back to last subject list ID
+                subjectListID = ( subjectListID < listSubject.length ) ? subjectListID - 1 : listSubject.length;
 
-                   currId -= 1;
-                } else {
-
-                   currId = listSubject.length;
-                }
-
-                var evt = {
-
-                    params: {
-
-                        data: {
-
-                            id: currId.toString()
-                        }
-                    }
-                };
-                switchSubjects(evt);
+                // Switch to registration image/QC status of subject with this list ID
+                switchSubjects({ params: { data: { id: subjectListID.toString() } } });
             }
+
+            /* Idea from Erin - ability to look through scans, keeping best and worst as stickies to allow scrolling through images for rejection/approval purposes - March 12, 2019 
+
+            */
 
             // Changes subjects with left and right arrows (previous and next, respectively)
             function registrationKeyDown(p_key) {
@@ -594,9 +774,9 @@
                 subject = $("#subject-select option[value=" + id + "]").text();
 
                 // Update the selection of the subject button
-                $es = $("#subject-select");
-                $es.val(id);
-                $es.trigger("change");
+                let subjectSelectDropdown = $("#subject-select");
+                subjectSelectDropdown.val(id);
+                subjectSelectDropdown.trigger("change");
 
                 // Grab the T1 and BOLD div, and build new empty figures
                 var figBOLD = $(".BOLD");
@@ -615,6 +795,7 @@
                 newFigT1.style.position = "relative";
                 newFigT1.style.left = "0px";
                 newFigT1.className = "T1";
+                newFigT1.id = "T1-img";
 
                 // Update figures
                 figBOLD.replaceWith(newFigBOLD);
@@ -631,6 +812,34 @@
                 figT1vsTemplate.css("backgroundSize","70%");
                 figT1vsTemplate.css("backgroundRepeat","no-repeat");
                 figT1vsTemplate.css("backgroundPosition","50% 0%");
+
+                // Set up images for point-clicking
+                var t1Img = $("#" + elementIDs.t1Img);
+                var t1Canvas = $("#" + elementIDs.t1Canvas);
+                // t1Img.on("click", recordPointClick);
+                t1Img.on("load", function() {
+                    let t1ImgDOM = document.getElementById(elementIDs.t1Img);
+                    t1Canvas.attr({
+                        "width": t1ImgDOM.clientWidth,
+                        "height": t1ImgDOM.clientHeight,
+                    });
+                    t1Canvas.on("mouseup", recordPointClick);          
+                    t1Canvas.css({
+                        // "position": "absolute",
+                        "left": t1ImgDOM.offsetLeft + "px",
+                        "top": t1ImgDOM.offsetTop + "px"
+                    });
+                    redrawAllPoints(true);                                       
+                });
+
+                // Pass through of canvas hover to img hover
+                // var context = t1Canvas.getContext("2d");
+                t1Canvas.hover(function() {
+                    t1Img.addClass("reg_img_hover");
+                    t1Img.css("-webkit-animation-play-state", "running");
+                }, function() {
+                    t1Img.css("-webkit-animation-play-state", "paused");
+                });                
             }
 
             // Translates a status hot key to text, displays the status onscreen, and stores it
@@ -748,6 +957,17 @@
                 // Change images
                 setImage(p_event);
 
+                // Restore any previous clicked qc points for new subject
+                if ( webStorageElement ) {
+
+                    // Enable undo and clear buttons if there are points for this subject
+                    if ( webStorageElement.pointCount() > 0 ) {
+                        
+                        document.getElementById(elementIDs.undoPointsButton).removeAttribute("disabled");
+                        document.getElementById(elementIDs.clearPointsButton).removeAttribute("disabled");
+                    }
+                }                
+
                 // Change chart titles
                 $("#t1-chart-title").text("Individual vs template T1 scan for " + newSubject);
                 $("#bold-chart-title").text("BOLD vs T1 scan for " + newSubject);
@@ -756,11 +976,11 @@
 
             // === Main script === //
 
-            // Get initial scan file info for first subject
+            // 1. Get initial scan file info for first subject
             var event = { params: { data: { id: "1" } } };
             var filesIn = buildFilesIn(event);
 
-            // Add a subject select dropdown based on the subject list
+            // 2. Add a subject select dropdown based on the subject list
             $("#subject-select").select2({ data: listSubject });
             $("#subject-select").on("select2:select", function (p_event) {
 
@@ -771,18 +991,20 @@
                 switchSubjects(p_event);
             });
 
-            // Create new web storage object for subject data
-            webStorageElement = new QCDash_WebStorage_SubjectData(
+            // 3. Create new web storage object for subject data
+            var webStorageElement = new QCDash_WebStorage_SubjectData(
                                             // Object.keys(filesIn.fmri.sessInitialMRI)[0],
                                             datasetID.timestamp,    // New unique data set ID
+                                            // "blahblah",    // New unique data set ID
                                             "Your comments here...",
                                             "registration-comment-textarea",
+                                            elementIDs.t1Canvas,
                                             $("#subject-select option[value=\"1\"]").text(),
                                             switchSubjects);
 
             // Determine first subject to load on to registration page
 
-            // Read page parameters for subject name
+            // 4. Read page parameters for subject name
             var subjectToLoad = { name: getParameterByName("id"), id: "1" };
             if ( subjectToLoad.name ) {
 
@@ -792,7 +1014,7 @@
 
                     subjectToLoad.id = "1";
                 }
-            // Check in web storage for a last subject from a previous registration session
+            // 4a. Check in web storage for a last subject from a previous registration session
             } else if ( webStorageElement.hasLastSubjectRecord() ) {
 
                 // Set internal storage to web storage's last subject
@@ -802,7 +1024,7 @@
                 subjectToLoad.id = webStorageElement.lastSubjectID;
             }
 
-            // Save ID to event data structure
+            // 5. Save ID to event data structure
             event.params.data.id = subjectToLoad.id;
 
             // // Read page parameters and update accordingly
@@ -836,10 +1058,10 @@
             //     filesIn = buildFilesIn(event);
             // }
 
-            // Get the file information for the selected subject
+            // 6. Get the file information for the selected subject
             filesIn = buildFilesIn(event);
 
-            // Switch to whatever subject
+            // 7. Switch to the selected subject
             switchSubjects(event);
 
 
@@ -866,7 +1088,9 @@
                 setSubjectStatus(currentSubject(), registrationHotKeys.UNMARKED_UPPERCASE);
             });
 
-            document.getElementById("inputfile-import");
+            // Point clearing button clicks
+            $("#registration-undo-point").click(function(){ undoLastPoint(); });
+            $("#registration-clear-points").click(function() { clearPoints(); });
 
             // Import dashboard button
             $("#file").change(function() {

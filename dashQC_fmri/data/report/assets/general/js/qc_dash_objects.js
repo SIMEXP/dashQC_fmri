@@ -338,6 +338,7 @@ class QCDash_BarChart {
     }
 }
 
+
 class QCDash_LineChart {
 
     constructor(p_data, p_divID, p_xLabel, p_yLabel, p_height, p_clickFn = null, p_chartTitle = "", p_chartNotes = "", p_extents = [0, 25]) {
@@ -469,7 +470,7 @@ class QCDash_LineChart {
 
 class QCDash_WebStorage_SubjectData {
 
-    constructor(p_exportFilePrefix, p_defaultText, p_textAreaID, p_currentSubject, p_setSubjectCallback) {
+    constructor(p_exportFilePrefix, p_defaultText, p_textAreaID, p_canvasID, p_currentSubject, p_setSubjectCallback) {
 
         // Subject fields
         this.m_currentSubject = p_currentSubject;
@@ -547,7 +548,10 @@ class QCDash_WebStorage_SubjectData {
         .bind("input propertychange", function() {
 
             this.saveCommentsToWebStorage();
-        }.bind(this));        
+        }.bind(this));
+
+        // QC Points fields
+        this.m_canvasID = p_canvasID;        
     }
 
     importSubjectInfo(p_importJSON) {
@@ -628,6 +632,11 @@ class QCDash_WebStorage_SubjectData {
         return this.m_localStorage.data.lastSubject.name;
     }
 
+    get points() {
+
+        return this.m_localStorage.data.subjects[this.m_currentSubject].points;
+    }
+
     get storageID() {
 
         return this.m_localStorage.id;
@@ -643,7 +652,7 @@ class QCDash_WebStorage_SubjectData {
 
     createSubjectRecord(p_subject) {
 
-        this.m_localStorage.data.subjects[p_subject] = { comments: "", status: "" };
+        this.m_localStorage.data.subjects[p_subject] = { comments: "", status: "", points: [] };
     }
 
     hasLastSubjectRecord() {
@@ -743,6 +752,68 @@ class QCDash_WebStorage_SubjectData {
             this.createSubjectRecord();
         }
         this.m_localStorage.data.subjects[this.m_currentSubject].comments = this.m_textAreaRef.val();        
+    }
+
+    // Clicked points methods
+
+    // Adds a clicked point to webstorage for this registration image for this QC session
+    addPoint(p_x, p_y) {
+
+        console.log("webStorageElement addPoint");
+        console.log(this.m_localStorage);
+
+        // Prevent same point from being added multiple times
+        let pointsList = this.m_localStorage.data.subjects[this.m_currentSubject].points;
+        for ( let index = 0; index < pointsList.length; index++ ) {
+            if ( p_x == pointsList[index][0] && p_y == pointsList[index][1] ){
+                return;
+            }
+        }
+
+        // Save the coordinate in local memory
+        // (NOTE: addPoint is only called when it is drawn to canvas)
+        this.m_localStorage.data.subjects[this.m_currentSubject].points.push([p_x, p_y, true]);
+
+        // Update actual browser web storage
+        this.saveLocalDataToStorage();
+    }
+
+    clearPoints() {
+
+        // Remove all qc points from this subject
+        this.m_localStorage.data.subjects[this.m_currentSubject].points = [];
+
+        // Update actual browser web storage
+        this.saveLocalDataToStorage();        
+    }
+
+    lastPoint() {
+
+        let pointCount = this.m_localStorage.data.subjects[this.m_currentSubject].points.length;
+        return this.m_localStorage.data.subjects[this.m_currentSubject].points[pointCount - 1];
+    }
+
+    pointCount() {
+
+        return this.m_localStorage.data.subjects[this.m_currentSubject].points.length;
+    }
+
+    removeLastPoint() {
+        
+        let pointCount = this.m_localStorage.data.subjects[this.m_currentSubject].points.length;
+        this.m_localStorage.data.subjects[this.m_currentSubject].points.pop();
+
+        // Update actual browser web storage
+        this.saveLocalDataToStorage();
+    }   
+
+    unmarkPoints() {
+
+        // Unmark all points as having been drawn
+        let pointsList = this.m_localStorage.data.subjects[this.m_currentSubject].points;
+        for ( let index = 0; index < pointsList.length; index++ ) {
+            pointsList[index][2] = false;
+        }        
     }
 
 
