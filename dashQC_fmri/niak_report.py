@@ -48,7 +48,7 @@ def copy_all_files(p_src_folder_wildcard, p_dest_folder):
     for file in p_src_folder_wildcard.parent.glob(p_src_folder_wildcard.name):
         if copy_debug:
             print("Copying {0} to {1}".format(file, p_dest_folder))
-        shutil.copy(file, p_dest_folder)
+        shutil.copy(str(file), str(p_dest_folder))
 
 
 def create_dataset_ids(p_dataset_id_folder):
@@ -58,7 +58,7 @@ def create_dataset_ids(p_dataset_id_folder):
     # based on this distinction criteria
     with (p_dataset_id_folder / "datasetID.js").open("w") as data_id_file:
         data_id_json = { "date": time.strftime("%Y-%m-%d-%H:%M:%S"),
-                         "timestamp": time.time() }
+                         "timestamp": int(time.time()) }
         data_id_file.write("var datasetID = " + json.dumps(data_id_json) + ";")
 
 
