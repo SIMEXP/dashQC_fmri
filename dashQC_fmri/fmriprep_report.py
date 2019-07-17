@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pathlib as pal
 import nibabel as nib
+import subprocess as sb
 from distutils import dir_util
 from nilearn import image as ni
 from matplotlib import gridspec
@@ -24,11 +25,14 @@ class DataInput(object):
     def _find_path(folder, pattern):
         search = list(folder.glob(pattern))
         if not len(search) == 1:
-            raise FileNotFoundError(
-                f'I found {len(search)} hits for {pattern} in {folder}. There needs to be exactly one match')
+            raise FileNotFoundError(f'I found {len(search)} hits for {pattern} in {folder}. '
+                                    f'There needs to be exactly one match')
         return search[0]
 
-    def check_outputs_done(self):
+    def check_outputs(self):
+        return [(p, p.exists()) for p in self.outputs]
+
+    def outputs_completed(self):
         return all([p.exists() for p in self.outputs])
 
 
@@ -36,7 +40,7 @@ class Subject(DataInput):
     def __init__(self, preproc_d, raw_d, subject_name, nl):
         self.nl = nl
         self.prep_d = pal.Path(preproc_d) / subject_name
-        self.raw_d = pal.Path(raw_d) / subject_name
+        self.raw_d = self._find_path(raw_d, f'**/{subject_name}')
         self.subject_name = subject_name
 
         # Define paths
@@ -52,12 +56,19 @@ class Subject(DataInput):
         self.func_raw_d = self._find_path(self.raw_d, self.nl['func_raw_d'])
         self.anat_f = self._find_path(self.anat_d,
                                       self.nl['anat_pre_f'].format(self.subject_name))
+        self.anat_skull_f = self._find_path(self.anat_d,
+                                            self.nl['anat_skull_pre_f'].format(self.subject_name))
+        self.anat_transform_f = self._find_path(self.anat_d,
+                                                self.nl['anat_to_stand_transform_f'].format(self.subject_name))
         self.func_f = self._find_path(self.func_d,
                                       self.nl['func_ref_pre_f'].format(self.subject_name, '*'))
         self.runs, self.run_names = self.find_runs()
 
         # Define outputs
         # Pasted subject names must be tuple for unpacking
+        self.img_anat_skull_f = self._set_path(self.fig_d,
+                                                     self.nl['img_anat_skull_pre_f'],
+                                                     (self.subject_name,))
         self.fig_anat_reg_outline_f = self._set_path(self.fig_d,
                                                      self.nl['fig_anat_reg_outline_f'],
                                                      (self.subject_name,))
@@ -70,7 +81,9 @@ class Subject(DataInput):
         self.report_f = self._set_path(self.fig_d,
                                        self.nl['report_f'],
                                        (self.subject_name,))
-        self.outputs = [self.fig_anat_reg_outline_f, self.fig_anat_reg_f, self.fig_func_reg_f, self.report_f]
+        self.outputs = [self.img_anat_skull_f, self.fig_anat_reg_outline_f,
+                        self.fig_anat_reg_f, self.fig_func_reg_f,
+                        self.report_f]
 
     def find_runs(self):
         run_names = list()
@@ -135,11 +148,14 @@ def get_name_lookup():
                    'func_mask_f': '{}_*_{}_space-*_desc-brain_mask.nii.gz',
                    'func_raw_d': 'func',
                    'anat_pre_f': '{}_*_desc-preproc_T1w.nii.gz',
+                   'anat_skull_pre_f': '{}_desc-preproc_T1w.nii.gz',
+                   'anat_to_stand_transform_f': '{}_from-T1w_to-*_mode-image_xfm.h5',
                    'func_ref_pre_f': '{}_*_{}_space-*_boldref.nii.gz',
                    'func_pre_f': '{}_*_{}_space-*_desc-preproc_bold.nii.gz',
                    'func_ref_raw_f': '{}_*_{}*.nii.gz',
                    'func_raw_f': '{}_*_{}*.nii.gz',
                    'confound_f': '{}_*_{}_desc-confounds_regressors.tsv',
+                   'img_anat_skull_pre_f': '{}_anat_skull.nii.gz',
                    'fig_anat_reg_outline_f': '{}_anat_reg_outline.png',
                    'fig_anat_reg_f': '{}_anat_reg.png',
                    'fig_func_reg_f': '{}_func_reg.png',
@@ -191,6 +207,24 @@ def get_template():
                         f'{[(key, template[key].exists()) for key in template.keys()]}')
 
     return template
+
+
+def apply_transform(sub):
+    command_result = sb.run(['antsApplyTransforms',
+                             '-i', sub.anat_skull_f,
+                             '-r', sub.anat_f,
+                             '-o', sub.img_anat_skull_f,
+                             '-t', sub.anat_transform_f],
+                            stderr=sb.PIPE, stdout=sb.PIPE, universal_newlines=True)
+    # Check if the command completed succesffuly
+    if command_result.returncode == 0:
+        return command_result.returncode
+    else:
+        # Something is bad
+        raise ChildProcessError(f'Running antsApplyTransform on {sub.subject_name} failed:\n'
+                                f'The command was:\n {" ".join([str(i) for i in command_result.args])}\n\n'
+                                f'This resulted in the following error message:\n'
+                                f'{command_result.stderr}')
 
 
 def populate_report(report_p, clobber=False):
@@ -264,10 +298,13 @@ def make_reg_montage(data_in, overlay=None, cmap=nlp.cm.black_red):
         return f_montage
 
 
-def motion_figure(img_path, x=3, y=1, cmap=nlp.cm.black_red):
+def motion_figure(img_path, x=3, y=1, cmap=nlp.cm.black_red, crop=False):
     # Load the image
     data_img = nib.load(str(img_path))
-    n_t = data_img.shape[3]
+    if crop:
+        n_t = 50
+    else:
+        n_t = data_img.shape[3]
 
     vmin = np.percentile(data_img.get_data(), 1)
     vmax = np.percentile(data_img.get_data(), 99.9)
@@ -424,12 +461,14 @@ def find_available_subjects(prep_p, raw_p, subject_list_f=None):
     potential_subjects = [str(query.relative_to(prep_p))
                           for query in prep_p.glob('sub-*') if query.is_dir()]
     available_subjects = list()
-    for sub_name in potential_subjects:
+    n_potential = len(potential_subjects)
+    for sub_id, sub_name in enumerate(potential_subjects):
         try:
             sub = Subject(prep_p, raw_p, sub_name, get_name_lookup())
             available_subjects.append(sub_name)
         except FileNotFoundError:
-            warnings.warn(f'Could not find all data for subject {sub_name} in {prep_p}')
+            warnings.warn(f'Could not find all data for subject {sub_name} in {prep_p}. '
+                          f'subject {sub_id} / {n_potential}')
 
     if subject_list_f is not None:
         with subject_list_f.open(mode='w') as f:
@@ -441,17 +480,22 @@ def find_available_subjects(prep_p, raw_p, subject_list_f=None):
 
 def process_subject(prep_p, raw_p, subject_name, clobber=True):
     sub = Subject(prep_p, raw_p, subject_name, get_name_lookup())
+    temp = get_template()
     # Check if the outputs are already generated
-    if sub.check_outputs_done() and not clobber:
-        raise Exception(f'Some subject-level outputs for {sub.subject_name} are already done. '
+    if sub.outputs_completed() and not clobber:
+        output_test = sub.check_outputs()
+        raise Exception(f'ALL subject-level outputs for {sub.subject_name} are already done. '
+                        f'Force clobber if you want to overwrite them:\n{output_test}')
+    if all([run.outputs_completed() for run in sub.runs]) and not clobber:
+        raise Exception(f'All run-level outputs for {sub.subject_name} are already done. '
                         'Force clobber if you want to overwrite them')
-    if all([run.check_outputs_done() for run in sub.runs]) and not clobber:
-        raise Exception(f'Some run-level outputs for {sub.subject_name} are already done. '
-                        'Force clobber if you want to overwrite them')
+    # Check specifically if the skull-anat file exists and run create it if not
+    if not sub.img_anat_skull_f.exists():
+        _ = apply_transform(sub)
 
     # Generate subject level outputs
-    fig_anat_reg_outline = make_reg_montage(sub.anat_f, cmap=plt.cm.Greys_r)  # Outline overlay is missing
-    fig_anat_reg = make_reg_montage(sub.anat_f, cmap=plt.cm.Greys_r)
+    fig_anat_reg_outline = make_reg_montage(sub.img_anat_skull_f, cmap=plt.cm.Greys_r, overlay=temp['outline'])
+    fig_anat_reg = make_reg_montage(sub.img_anat_skull_f, cmap=plt.cm.Greys_r)
     fig_func_reg = make_reg_montage(sub.func_f)
     report = report_subject(sub)
     # Store subject level outputs
@@ -465,8 +509,8 @@ def process_subject(prep_p, raw_p, subject_name, clobber=True):
     for run in sub.runs:
         fig_func_ref_raw = target_figure(run.func_ref_raw_f)
         fig_func_ref = target_figure(run.func_ref_prep_f)
-        fig_mot_raw = motion_figure(run.func_raw_f)
-        fig_mot = motion_figure(run.func_prep_f)
+        fig_mot_raw = motion_figure(run.func_raw_f, crop=True)
+        fig_mot = motion_figure(run.func_prep_f, crop=True)
 
         fig_func_ref_raw.savefig(run.fig_func_ref_raw_f, dpi=100)
         fig_func_ref.savefig(run.fig_func_ref_f, dpi=100)
@@ -489,14 +533,24 @@ def generate_dashboard(prep_p, raw_p, report_p, clobber=True):
     for sub_name in potential_subjects:
         try:
             sub = Subject(prep_p, raw_p, sub_name, get_name_lookup())
-        except FileNotFoundError:
-            warnings.warn(f'Could not find all data for subject {sub_name} in {prep_p}')
+        except FileNotFoundError as e:
+            warnings.warn(f'Could not find all data for subject {sub_name} in {prep_p}:\n{e}')
             continue
-        if sub.check_outputs_done():
+        # Check Subject level outputs
+        output_test = sub.check_outputs()
+        output_paths, output_available = zip(*output_test)
+        # Check Run level outputs
+        runs_available = [run.outputs_completed() for run in sub.runs]
+        if all(output_available) and all(runs_available):
             available_subjects.append(sub_name)
             subjects.append(sub)
+        elif all(output_available) and not all(runs_available):
+            run_names, run_status= zip(*[(run.run_name, run.outputs_completed()) for run in sub.runs])
+            missing_runs = [run_name for rid, run_name in enumerate(run_names) if not run_status[rid]]
+            warnings.warn(f'{sub_name} is missing run level information:\n    {missing_runs}')
         else:
-            warnings.warn(f'{sub_name} is not finished yet in {prep_p}')
+            missing_paths = [path for path, available in output_test if not available]
+            warnings.warn(f'{sub_name} is missing both run and subject level information:\n    {missing_paths}')
 
     # Get the corresponding runs
     runs = [run for sub in subjects for run in sub.runs]
@@ -518,8 +572,7 @@ def generate_dashboard(prep_p, raw_p, report_p, clobber=True):
     fig_t1_group_average = make_reg_montage(t1_group_average,
                                             overlay=temp['outline'],
                                             cmap=plt.cm.Greys_r)
-    fig_func_group_average = make_reg_montage(func_group_average,
-                                            overlay=temp['outline'])
+    fig_func_group_average = make_reg_montage(func_group_average)
     fig_func_group_mask_average = make_reg_montage(func_group_mask_average)
     fig_func_group_mask = make_reg_montage(func_group_mask)
     fig_template_outline = make_reg_montage(temp['T1'], overlay=temp['outline'],
@@ -646,15 +699,23 @@ if __name__ == "__main__":
                              "Depending on the mode, this should be either a directory name or a path to a text file.")
     parser.add_argument("-s", "--subject", type=str,
                         help="Specify the subject you want to run on. Only works when mode = subject.")
+    parser.add_argument("-c", "--clobber", type=bool, default=False,
+                        help="If set to 'True', existing outputs will be overwritten. Default is 'False'.")
     args = parser.parse_args()
     if args.mode == 'detect':
         find_available_subjects(pal.Path(args.preproc_dir),
                                 pal.Path(args.raw_dir),
                                 pal.Path(args.output_path))
     if args.mode == 'subject':
+        # Check if ANTs is setup correctly
+        if shutil.which('antsApplyTransforms') is None:
+            raise EnvironmentError('ANTs does not seem to be correctly configured on your system. '
+                                   'Please make sure that ANTs is installed and that you can run '
+                                   '"antsApplyTransforms" from inside your command line.')
         process_subject(pal.Path(args.preproc_dir),
                         pal.Path(args.raw_dir),
-                        args.subject)
+                        args.subject,
+                        clobber=args.clobber)
     if args.mode == 'dashboard':
         generate_dashboard(pal.Path(args.preproc_dir),
                            pal.Path(args.raw_dir),
