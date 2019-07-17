@@ -5,6 +5,7 @@
 
     <title>Report on the quality of MRI registration</title>
 
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
     <!-- Stylesheets -->
@@ -898,10 +899,19 @@
                     return;
                 }
 
+                // Switch subjects
+                switchSubjects({ params: { data: { id: findSubjectIDFromName(listSubject, subjectName)} } });
+
                 // Fill in DOM objects
                 $("#" + p_uiList.select).select({ params: { data: { id: foundID } } });
-                $("#" + p_uiList.comments).val(p_webStorageObject.subjects[subjectName].comments);
-                $("#" + p_uiList.status).text(p_webStorageObject.subjects[subjectName].status);
+                if ( subjectName in p_webStorageObject.subjects ) {
+                    
+                    $("#" + p_uiList.comments).val(p_webStorageObject.subjects[subjectName].comments);
+                    $("#" + p_uiList.status).text(p_webStorageObject.subjects[subjectName].status);
+                }
+
+                // Redraw points for the current subject
+                redrawAllPoints(true);
             }
 
 
@@ -995,7 +1005,6 @@
             var webStorageElement = new QCDash_WebStorage_SubjectData(
                                             // Object.keys(filesIn.fmri.sessInitialMRI)[0],
                                             datasetID.timestamp,    // New unique data set ID
-                                            // "blahblah",    // New unique data set ID
                                             "Your comments here...",
                                             "registration-comment-textarea",
                                             elementIDs.t1Canvas,
