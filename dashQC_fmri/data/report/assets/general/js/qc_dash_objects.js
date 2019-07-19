@@ -881,8 +881,12 @@ class QCDash_WebStorage_SubjectData {
             return;
         }
 
+        var data = new Blob([localStorage.getItem(p_localStorageID)], 
+                            { type: "text/plain;charset=utf-8" });
+        var fileOfBlob = new File([data], p_exportFilename);
+
         // Returns a URL you can use as a href
-        return window.URL.createObjectURL(fileOfBlob);
+        return window.URL.createObjectURL(fileOfBlob);        
     }    
  
     static importFile(p_webStorageObject, p_filename, p_subjectList, p_uiList, p_setUIToSubjectCallback) {
