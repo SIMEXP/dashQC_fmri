@@ -1,7 +1,7 @@
 dashQC: An interactive quality control dashboard
 ================================================
 
-This dashboard is developed by the `SIMEXP lab <https://simexp.github.io/lab-website/>`_ at the `Centre de recherche de l'Institut universitaire de gériatrie de Montréal <http://www.criugm.qc.ca/>`_. We use the dashboard daily in our lab internal quality control procedure to process large scale datasets.
+This dashboard is developed by the `SIMEXP lab <https://simexp.github.io/lab-website/>`_ at the `Centre de recherche de l'Institut universitaire de gériatrie de Montréal <http://www.criugm.qc.ca/>`_. We use the dashboard daily in our lab internal quality control procedure to process large scale datasets. A demo of the dashboard can be found `here <https://dashqc.github.io/>`_.
 
 .. note:: ``dashQC_fmri`` is at an early stage of development and while we use
     it for our own quality control and are committed to developing it further, you may
