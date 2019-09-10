@@ -16,6 +16,47 @@
         canvas {
 
             opacity: 0.7;
+        } 
+
+        /* Hover animation */
+        @keyframes flickerAnimation {
+
+            from { opacity: 1; }
+            to { opacity: 0;}
+        }
+
+        .button_hotkey_letter {
+
+            text-decoration: underline;
+        }
+
+        .cs-reg-img {
+
+            text-align: center;
+        }               
+
+        .register {
+
+            display: inline-block;
+        }
+
+        /* .register img:hover {
+
+            animation-name: flickerAnimation;
+            animation-duration: 1s;
+            animation-iteration-count: 1;
+            animation-direction: normal;
+            animation-timing-function: ease-in-out;
+            animation-fill-mode: both;
+        }*/
+        .reg_img_hover {
+
+            animation-name: flickerAnimation;
+            animation-duration: 1s;
+            animation-iteration-count: infinite;
+            animation-direction: alternate;
+            animation-timing-function: ease-in-out;
+            animation-fill-mode: both;
         }        
 
         .sliderNext {
@@ -50,45 +91,7 @@
             object-position: -50px 0;
         }
 
-        @keyframes flickerAnimation {
-
-            from { opacity: 1; }
-            to { opacity: 0;}
-        }
-
-        .register {
-
-            display: inline-block;
-        }
-        /* .register img:hover {
-
-            animation-name: flickerAnimation;
-            animation-duration: 1s;
-            animation-iteration-count: 1;
-            animation-direction: normal;
-            animation-timing-function: ease-in-out;
-            animation-fill-mode: both;
-        }*/
-        .reg_img_hover {
-
-            animation-name: flickerAnimation;
-            animation-duration: 1s;
-            animation-iteration-count: infinite;
-            animation-direction: alternate;
-            animation-timing-function: ease-in-out;
-            animation-fill-mode: both;
-        }        
-
-        .button_hotkey_letter {
-
-            text-decoration: underline;
-        }
-
-        .cs-reg-img {
-
-            text-align: center;
-        }
-
+        /* QC Buttons */
         #registration-pass, #registration-maybe, #registration-fail, #registration-unmark,
         #registration-undo-point, #registration-clear-points {
 
@@ -111,26 +114,23 @@
         }
 
         /* Styling for T1 registration image error painting */
-        #cs-reg-img { 
-            width:256px; height:256px; 
-            margin:20px 60px; 
-            border:1px solid blue;
+        #T1-indVsTemplate, #boldVsT1 { 
+
+            height: 100%; 
+            position: relative;
         }
-        #T1-indVsTemplate { 
-            /*width:100%;*/
-            height:100%; 
-            position:relative;
-        }
-        #T1-img { 
-            /*width:100%; height:100%; */
-            position:absolute; top:0px; left:0px;
+        #T1-img, #BOLD-img { 
+
+            position: absolute;
+            top: 0px;
+            left: 0px;
         }
         #T1-canvas { 
-            /*width:70%; height:70%; */
+
             position: absolute; 
-            top:0px; left:0px;
-            /*background-color: rgba(255,0,0,.1);*/
-        }         
+            top: 0px;
+            left: 0px;
+        }                 
 
     </style>
 
@@ -791,6 +791,7 @@
                 newFigBOLD.style.position = "relative";
                 newFigBOLD.style.left = "0px";
                 newFigBOLD.className = "BOLD";
+                newFigBOLD.id = "BOLD-img";
                 newFigT1.src = "assets/registration/images/" + subject + "_anat.png";
                 newFigT1.setAttribute("width", "70%");
                 newFigT1.style.position = "relative";
@@ -816,6 +817,7 @@
 
                 // Set up images for point-clicking
                 var t1Img = $("#" + elementIDs.t1Img);
+                var boldImg = $("#" + elementIDs.boldImg);
                 var t1Canvas = $("#" + elementIDs.t1Canvas);
                 // t1Img.on("click", recordPointClick);
                 t1Img.on("load", function() {
@@ -840,7 +842,17 @@
                     t1Img.css("-webkit-animation-play-state", "running");
                 }, function() {
                     t1Img.css("-webkit-animation-play-state", "paused");
-                });                
+                });
+
+                // Add similar hover functionality to Bold v. T1 image
+                boldImg.on("load", function(){
+                    boldImg.hover(function() {
+                        boldImg.addClass("reg_img_hover");
+                        boldImg.css("-webkit-animation-play-state", "running");
+                    }, function() {
+                        boldImg.css("-webkit-animation-play-state", "paused");
+                    });
+                });
             }
 
             // Translates a status hot key to text, displays the status onscreen, and stores it
