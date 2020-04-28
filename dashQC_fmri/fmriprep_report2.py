@@ -585,15 +585,14 @@ def generate_dashboard(prep_p, report_p, clobber=True):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    generate_dashboard(pal.Path('/home/surchs/Project_Data/dash_example'),
-                        pal.Path('temp_report'))
     parser.add_argument("preproc_dir", type=str,
                         help="bids conform directory of the fmriprep outputs")
     parser.add_argument("output_path", type=str,
-                        help="Select the path where outputs should be generated. "
+                        help="Select the path where report should be generated. "
                              "Depending on the mode, this should be either a directory name or a path to a text file.")
     parser.add_argument("-c", "--clobber", type=bool, default=False,
                         help="If set to 'True', existing outputs will be overwritten. Default is 'False'.")
     args = parser.parse_args()
     generate_dashboard(pal.Path(args.preproc_dir),
-                        pal.Path(args.output_path))
+                        pal.Path(args.output_path),
+                        args.clobber)
