@@ -319,6 +319,14 @@ def process_subject(sub_d, clobber=True):
             fig_func_ref.savefig(run_d['fig_boldref'], dpi=100)
 
 
+def get_run_name(path_str):
+    search_str = r'^(?P<sub>sub-\d+)_*?(?P<session>ses-\d+)?_*(?P<task>task-[a-zA-Z0-9.-]+)_*(?P<run>run-\d+)?'
+    search_dict = re.search(search_str, path_str).groupdict()
+    return '_'.join([search_dict[key]
+                     for key in ['sub', 'session', 'task', 'run']
+                     if search_dict[key] is not None])
+
+
 def generate_dashboard(prep_p, report_p, clobber=True):
     try:
         report_p.mkdir(exist_ok=clobber)
@@ -379,12 +387,11 @@ def generate_dashboard(prep_p, report_p, clobber=True):
                         f'{root_query.name}_{ses_q.name} is missing some anatomical data @ {sub_data["anat_d"]}')
                         continue
                     # Look for runs inside this subject
-                    run_names = list(set([re.search(r'^.*(?<=run-)\d+', 
-                                                    str(p.name)).group()
-                                        for p in sub_data['func_d'].glob('*run-*')]))
+                    run_names = list(set([get_run_name(str(p.name))
+                                          for p in sub_data['func_d'].glob('*task-*')]))
                     if len(run_names)==0:
                         warnings.warn(
-                            f'{ses_q.name} has no functional data at {ses_q.resolve()}')
+                            f'{ses_q.name} has no functional data at {sub_data["func_d"]}')
                         continue
 
                     run_d = {}
