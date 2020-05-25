@@ -205,6 +205,9 @@ def average_image(paths):
     images = [nib.load(str(p)) for p in paths]
     sizes = set([img.shape for img in images])
     if not len(sizes)==1:
+        print(f'I got these paths: {paths}')
+        for img in images:
+            print(f'{img.get_filename()} has shape {img.shape}')
         raise Exception(f'images to be averaged have inconsitent sizes: {sizes}')
     size = list(sizes)[0]
     n_img = len(images)
@@ -319,9 +322,13 @@ def process_subject(sub_d, clobber=True):
             fig_func_ref.savefig(run_d['fig_boldref'], dpi=100)
 
 
-def get_run_name(path_str):
-    search_str = r'^(?P<sub>sub-\d+)_*?(?P<session>ses-\d+)?_*(?P<task>task-[a-zA-Z0-9.-]+)_*(?P<run>run-\d+)?'
-    search_dict = re.search(search_str, path_str).groupdict()
+def get_run_name(path_str): 
+    search_str = r'^(?P<sub>sub-\d+)_*?(?P<session>ses-[a-zA-Z0-9]+)?_*(?P<task>task-[a-zA-Z0-9]+)_*(?P<run>run-\d+)?'
+    search = re.search(search_str, path_str)
+    if search is None:
+        warnings.warn(
+            f'Could not find valid BIDS data at {path_str}. I will (probably) die now.')
+    search_dict = search.groupdict()
     return '_'.join([search_dict[key]
                      for key in ['sub', 'session', 'task', 'run']
                      if search_dict[key] is not None])
@@ -417,6 +424,7 @@ def generate_dashboard(prep_p, report_p, clobber=True):
                         runs[run_name] = run_data
                     sub_data['runs'] = run_d
                     subjects[sub_name] = sub_data
+    #TODO: make sure there are any subjects found here and error out if not!
 
     subject_list = list(subjects.keys())
     run_list = list(runs.keys())
