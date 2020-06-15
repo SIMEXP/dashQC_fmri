@@ -297,29 +297,45 @@ def report_subject(sub, temp):
     return report
 
 
-def process_subject(sub_d, clobber=True):
+def process_subject(sub_d, asset_p, sub_name, clobber=True):
     temp = get_template()
     runs = sub_d['runs']
+    ol = get_report_lookup()
+    
     # Go through the outputs and see if they already exist
-    if not sub_d['fig_anat_outline'].is_file() or clobber:
+    if not (asset_p /
+    ol['fig_sub_anat_reg_outline'].format(sub_name)).is_file() or clobber:
         fig_anat_reg_outline = make_reg_montage(
             sub_d['t1'], cmap=plt.cm.Greys_r, overlay=temp['outline'])
-        fig_anat_reg_outline.savefig(sub_d['fig_anat_outline'], dpi=300)
-    if not sub_d['fig_anat'].is_file() or clobber:
+        fig_anat_reg_outline.savefig(asset_p /
+                                     ol['fig_sub_anat_reg_outline'].format(sub_name), dpi=300)
+    if not (asset_p /
+    ol['fig_sub_anat_reg'].format(sub_name)).is_file() or clobber:
         fig_anat_reg = make_reg_montage(sub_d['t1'], cmap=plt.cm.Greys_r)
-        fig_anat_reg.savefig(sub_d['fig_anat'], dpi=300)
-    if not sub_d['fig_boldref'].is_file() or clobber:
+        fig_anat_reg.savefig(asset_p /
+                             ol['fig_sub_anat_reg'].format(sub_name), dpi=300)
+    if not (asset_p /
+    ol['fig_sub_func_reg'].format(sub_name)).is_file() or clobber:
         # Get the average boldref of the underlying runs
         avg_boldref = average_image([runs[run]['boldref'] for run in runs.keys()])
         fig_func_reg = make_reg_montage(avg_boldref)
-        fig_func_reg.savefig(sub_d['fig_boldref'], dpi=300)
+        fig_func_reg.savefig(asset_p /
+                             ol['fig_sub_func_reg'].format(sub_name), dpi=300)
 
     # Generate the run level outputs
     for run_name in runs.keys() or clobber:
         run_d = runs[run_name]
-        if not run_d['fig_boldref'].is_file():
+        if not (asset_p /
+        ol['fig_run_ref_prep'].format(run_name)).is_file():
             fig_func_ref = target_figure(run_d['boldref'])
-            fig_func_ref.savefig(run_d['fig_boldref'], dpi=100)
+            fig_func_ref.savefig(asset_p /
+                                 ol['fig_run_ref_prep'].format(run_name), dpi=100)
+            fig_func_ref.savefig(asset_p /
+                                 ol['fig_run_ref_raw'].format(run_name), dpi=100)
+            fig_func_ref.savefig(asset_p /
+                                 ol['fig_run_mot_prep'].format(run_name), dpi=100)
+            fig_func_ref.savefig(asset_p /
+                                 ol['fig_run_mot_raw'].format(run_name), dpi=100)
 
 
 def get_run_name(path_str): 
@@ -373,16 +389,8 @@ def generate_dashboard(prep_p, report_p, clobber=True):
                 if (ses_q / 'func').is_dir():
                     sub_data = {
                         'anat_d': root_query / 'anat',
-                        'func_d': ses_q / 'func',
-                        'fig_d': ses_q / 'figures',
+                        'func_d': ses_q / 'func'
                     }
-                    if not sub_data['fig_d'].is_dir():
-                        sub_data['fig_d'].mkdir()
-
-                    sub_data['fig_anat_outline'] = sub_data['fig_d'] / f'{sub_name}_anat_reg_outline.png'
-                    sub_data['fig_anat'] = sub_data['fig_d'] / f'{sub_name}_anat_reg.png'
-                    sub_data['fig_boldref'] = sub_data['fig_d'] / \
-                        f'{sub_name}_func_reg.png'
 
                     try:
                         sub_data['mask'] = list(sub_data['anat_d'].glob(
@@ -404,7 +412,6 @@ def generate_dashboard(prep_p, report_p, clobber=True):
                     run_d = {}
                     for run_name in run_names:
                         run_data = {'sub_name': sub_name}
-                        run_data['fig_boldref'] = sub_data['fig_d'] / f'{sub_name}_{run_name}_func_ref.png'
                         try:
                             for fname, fglob in templates.items():
                                 run_search = list(
@@ -514,33 +521,19 @@ def generate_dashboard(prep_p, report_p, clobber=True):
     chart_t1_str = '\n'.join((anat_part1, anat_part2))
 
     # Generate subject level outputs
+    print(f'START processing data to repository @ {report_p}')
+    asset_p = report_p / 'assets'
     for sub_name in subject_list:
         print(f'Processing subject {sub_name} now.')
-        process_subject(subjects[sub_name], clobber=clobber)
+        process_subject(subjects[sub_name], asset_p, sub_name, clobber=clobber)
     print('Subject processing DONE')
 
-    # Copy pregenerated data to the repository
-    print(f'START moving data to repository @ {report_p}')
-    asset_p = report_p / 'assets'
+    # Copy pregenerated strings to the repository
     ol = get_report_lookup()
     for sub_name in subject_list:
         sub_d = subjects[sub_name]
-        shutil.copyfile(sub_d['fig_anat'], asset_p /
-                        ol['fig_sub_anat_reg'].format(sub_name))
-        shutil.copyfile(sub_d['fig_anat_outline'], asset_p / ol['fig_sub_anat_reg_outline'].format(sub_name))
-        shutil.copyfile(sub_d['fig_boldref'], asset_p /
-                        ol['fig_sub_func_reg'].format(sub_name))
-
         for run_name in sub_d['runs'].keys():
             run_d = sub_d['runs'][run_name]
-            shutil.copyfile(run_d['fig_boldref'], asset_p /
-                            ol['fig_run_ref_prep'].format(run_name))
-            shutil.copyfile(run_d['fig_boldref'], asset_p /
-                            ol['fig_run_ref_raw'].format(run_name))
-            shutil.copyfile(run_d['fig_boldref'], asset_p /
-                            ol['fig_run_mot_prep'].format(run_name))
-            shutil.copyfile(run_d['fig_boldref'], asset_p /
-                            ol['fig_run_mot_raw'].format(run_name))
 
             # JSON reports too
             run_str = make_run_str(
