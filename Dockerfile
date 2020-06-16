@@ -27,7 +27,9 @@ RUN conda install -y python=3.8.2 \
                      numpy=1.18.1 \
                      nibabel=3.1.0 \
                      nilearn=0.6.2 \
-                     matplotlib=3.1.3; sync && \
+                     matplotlib=3.1.3 \
+                     joblib=0.15.1 \
+                     tqdm=4.46.1; sync && \
     chmod -R a+rX /usr/local/miniconda; sync && \
     chmod +x /usr/local/miniconda/bin/*; sync && \
     conda build purge-all; sync && \

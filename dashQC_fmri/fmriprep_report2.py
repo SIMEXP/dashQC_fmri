@@ -1,6 +1,7 @@
 import re
 import json
 import time
+import tqdm
 import shutil
 import warnings
 import argparse
@@ -8,11 +9,13 @@ import numpy as np
 import pandas as pd
 import pathlib as pal
 import nibabel as nib
+import multiprocessing
 import subprocess as sb
 from distutils import dir_util
 from nilearn import image as ni
 from matplotlib import gridspec
 from nilearn import plotting as nlp
+from joblib import Parallel, delayed
 from matplotlib import pyplot as plt
 
 
@@ -350,7 +353,16 @@ def get_run_name(path_str):
                      if search_dict[key] is not None])
 
 
-def generate_dashboard(prep_p, report_p, clobber=True):
+def generate_dashboard(prep_p, report_p, clobber=True, 
+                       n_cpu=multiprocessing.cpu_count()-2):
+    if n_cpu < 1:
+        n_cpu = 1
+    elif n_cpu > multiprocessing.cpu_count():
+        
+        warnings.warn(
+            f'You requested {n_cpu} cores but this sytem only has {multiprocessing.cpu_count()}. CPU_count is set to 1!')
+        n_cpu = 1
+        
     try:
         report_p.mkdir(exist_ok=clobber)
     except FileExistsError as e:
@@ -439,8 +451,11 @@ def generate_dashboard(prep_p, report_p, clobber=True):
     # Make the json reports
     print('START JSON reports')
     temp = get_template()
-    reports = {sub_name: report_subject(subjects[sub_name], temp)
-               for sub_name in subject_list}
+    # Empty scrubbing masks can raise warnings here and clutter STDOUT
+    # We catch them and ignore them.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        reports = {sub_name: report_subject(subjects[sub_name], temp) for sub_name in tqdm.tqdm(subject_list)}
     print('DONE JSON reports')
 
     # Generate group level data
@@ -521,11 +536,14 @@ def generate_dashboard(prep_p, report_p, clobber=True):
     chart_t1_str = '\n'.join((anat_part1, anat_part2))
 
     # Generate subject level outputs
-    print(f'START processing data to repository @ {report_p}')
+    print(f'START PARALLEL processing data to repository @ {report_p}')
     asset_p = report_p / 'assets'
-    for sub_name in subject_list:
-        print(f'Processing subject {sub_name} now.')
-        process_subject(subjects[sub_name], asset_p, sub_name, clobber=clobber)
+    # Opening a lot of pyplot figures raises a memory warning. We ignore that. 
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        with Parallel(n_jobs=n_cpu) as parallel:
+            results = parallel(delayed(process_subject)(subjects[sub_name], asset_p, sub_name, clobber=clobber)
+                            for sub_name in subject_list)
     print('Subject processing DONE')
 
     # Copy pregenerated strings to the repository
@@ -600,7 +618,10 @@ if __name__ == "__main__":
                              "Depending on the mode, this should be either a directory name or a path to a text file.")
     parser.add_argument("-c", "--clobber", type=bool, default=False,
                         help="If set to 'True', existing outputs will be overwritten. Default is 'False'.")
+    parser.add_argument("-n", "--ncpu", type=int, default=2,
+                        help="Define the number of CPUs to be used.")
     args = parser.parse_args()
     generate_dashboard(pal.Path(args.preproc_dir),
                         pal.Path(args.output_path),
-                        args.clobber)
+                        args.clobber,
+                        args.ncpu)
