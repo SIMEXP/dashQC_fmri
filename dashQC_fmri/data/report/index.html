@@ -640,11 +640,11 @@
                 tableInfo: {
                     columns: [["rt-column-id", "id", null],
                               ["rt-column-name", "name", null],
-                              ["rt-column-corr_target", "corr_target", "intra"],
-                              ["rt-column-fdbefore", "FD_before", "fd"],
-                              ["rt-column-fdafter", "FD_after", "fd"],
-                              ["rt-column-volscrubbed", "vol_scrubbed", "nbVol"],
-                              ["rt-column-volok", "vol_ok", "nbVol"]],
+                              ["rt-column-corr_target", "corr_subject_T1", "intra"],
+                              ["rt-column-fdbefore", "FD_before_scrubbing", "fd"],
+                              ["rt-column-fdafter", "FD_after_scrubbing", "fd"],
+                              ["rt-column-volscrubbed", "vol_after_scrubbing", "nbVol"],
+                              ["rt-column-volok", "vol_before_scrubbing", "nbVol"]],
                     footers: ["rt-column-footer-id",
                               "rt-column-footer-name",
                               "rt-column-footer-corr_target",
@@ -670,10 +670,10 @@
                 tableInfo: {
                     columns: [["st-column-id", "id", null],
                               ["st-column-name", "name", null],
-                              ["st-column-t1corrtarget", "T1 corr_target", "t1"],
-                              ["st-column-t1overlapbrain", "T1 overlap_brain", "overlapT1"],
-                              ["st-column-boldcorrtarget", "BOLD corr_target", "bold"],
-                              ["st-column-boldoverlapbrain", "BOLD overlap_brain", "brain"]],
+                              ["st-column-t1corrtarget", "T1 corr template", "t1"],
+                              ["st-column-t1overlapbrain", "T1 ovlp template", "overlapT1"],
+                              ["st-column-boldcorrtarget", "BOLDref corr template", "bold"],
+                              ["st-column-boldoverlapbrain", "BOLDref ovlp template", "brain"]],
                     footers: ["st-column-footer-id",
                               "st-column-footer-name",
                               "st-column-footer-t1corrtarget",
@@ -694,10 +694,10 @@
             myTableElement.append("<thead><tr>" +
                                   "<th class='st-column-nohighlight' id='" + contents.registration.tableInfo.columns[0][0] + "'>id</th>" +
                                   "<th class='st-column-nohighlight' id='" + contents.registration.tableInfo.columns[1][0] + "'>name</th>" +
-                                  "<th id='" + contents.registration.tableInfo.columns[2][0] + "'>T1 corr_target</th>" +
-                                  "<th id='" + contents.registration.tableInfo.columns[3][0] + "'>T1 overlap_brain</th>" +
-                                  "<th id='" + contents.registration.tableInfo.columns[4][0] + "'>BOLD corr_target</th>" +
-                                  "<th id='" + contents.registration.tableInfo.columns[5][0] + "'>BOLD overlap_brain</th>" +
+                                  "<th id='" + contents.registration.tableInfo.columns[2][0] + "'>T1 corr template</th>" +
+                                  "<th id='" + contents.registration.tableInfo.columns[3][0] + "'>T1 ovlp template</th>" +
+                                  "<th id='" + contents.registration.tableInfo.columns[4][0] + "'>BOLDref corr template</th>" +
+                                  "<th id='" + contents.registration.tableInfo.columns[5][0] + "'>BOLDref ovlp template</th>" +
                                   "</tr></thead><tbody>");
             for ( var textID in contents.registration.dataDict ) {
 
