@@ -285,16 +285,19 @@ def report_run(run):
 
 def report_subject(sub, temp):
     report = dict()
-    report['ovlp_T1_stereo'] = brain_overlap(temp['T1'], sub['t1'])  # replace with MNI
+    report['ovlp_T1_stereo'] = brain_overlap(temp['mask'], sub['mask'])  # replace with MNI
     report['corr_T1_stereo'] = brain_correlation(temp['T1'], sub['t1'])  # replace with MNI
     # Compute the average boldref
     runs = sub['runs']
     boldref_avg = average_image([runs[run]['boldref'] for run in runs.keys()])
+    boldref_avg_mask = nib.Nifti1Image((boldref_avg.get_fdata() > 0.95).astype(int),
+                                       affine=boldref_avg.affine,
+                                       header=boldref_avg.header)
 
     report['ovlp_BOLD_T1'] = brain_overlap(
-        boldref_avg, temp['mask'])  # replace with MNI
+        boldref_avg_mask, temp['mask'])  # replace with MNI
     report['corr_BOLD_T1'] = brain_correlation(
-        boldref_avg, temp['mask'])  # replace with MNI
+        boldref_avg, temp['T1'])  # replace with MNI
     report['run_names'] = runs.keys()
     report['runs'] = {run_name: report_run(runs[run_name]) for run_name in report['run_names']}
     return report
