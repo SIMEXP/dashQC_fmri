@@ -255,7 +255,7 @@ def make_run_str(run_report):
     return out_str
 
 
-def report_run(run):
+def report_run(run, temp_ref):
     # TODO remove first nan from FD
     conf = pd.read_csv(run['confound'], sep='\t')
     # First add motion parameters
@@ -279,7 +279,8 @@ def report_run(run):
     report['scrubbed'] = [float(scrub) for scrub in scrubbed]
     report['fd'] = [float(f) for f in fd]
     # Placeholder for current dashboard
-    report['corr_run_ref'] = 1
+    report['corr_run_ref'] = brain_correlation(
+        run['boldref'], temp_ref['t1'])
     return report
 
 
@@ -299,7 +300,8 @@ def report_subject(sub, temp):
     report['corr_BOLD_T1'] = brain_correlation(
         boldref_avg, temp['T1'])  # replace with MNI
     report['run_names'] = runs.keys()
-    report['runs'] = {run_name: report_run(runs[run_name]) for run_name in report['run_names']}
+    report['runs'] = {run_name: report_run(
+        runs[run_name], sub) for run_name in report['run_names']}
     return report
 
 
