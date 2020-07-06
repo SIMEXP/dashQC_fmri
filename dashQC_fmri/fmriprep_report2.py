@@ -14,6 +14,7 @@ import subprocess as sb
 from distutils import dir_util
 from nilearn import image as ni
 from matplotlib import gridspec
+from sklearn import metrics as skm
 from nilearn import plotting as nlp
 from joblib import Parallel, delayed
 from matplotlib import pyplot as plt
@@ -179,10 +180,10 @@ def brain_overlap(img_test_p, img_ref_p):
                                    target_affine=img_ref.affine,
                                    target_shape=img_ref.shape,
                                    interpolation='nearest')
-    mask_test = img_test.get_fdata().astype(bool)
-    mask_ref = img_ref.get_fdata().astype(bool)
+    mask_test = img_test.get_fdata().astype(bool).flatten()
+    mask_ref = img_ref.get_fdata().astype(bool).flatten()
 
-    overlap = np.sum(mask_test & mask_ref) / np.sum(mask_ref)
+    overlap = skm.jaccard_score(mask_test,  mask_ref)
 
     return float(overlap)
 
@@ -291,12 +292,13 @@ def report_subject(sub, temp):
     # Compute the average boldref
     runs = sub['runs']
     boldref_avg = average_image([runs[run]['boldref'] for run in runs.keys()])
-    boldref_avg_mask = nib.Nifti1Image((boldref_avg.get_fdata() > 0.95).astype(int),
-                                       affine=boldref_avg.affine,
-                                       header=boldref_avg.header)
+    boldref_avg_mask = average_image([runs[run]['mask'] for run in runs.keys()])
+    boldref_mask = nib.Nifti1Image((boldref_avg_mask.get_fdata() > 0.95).astype(int),
+                                   affine=boldref_avg_mask.affine,
+                                   header=boldref_avg_mask.header)
 
     report['ovlp_BOLD_T1'] = brain_overlap(
-        boldref_avg_mask, temp['mask'])  # replace with MNI
+        boldref_mask, temp['mask'])  # replace with MNI
     report['corr_BOLD_T1'] = brain_correlation(
         boldref_avg, temp['T1'])  # replace with MNI
     report['run_names'] = runs.keys()
