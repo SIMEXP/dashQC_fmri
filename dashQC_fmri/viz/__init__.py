@@ -2,4 +2,4 @@
 
 import pkg_resources
 
-__version__ = pkg_resources.require("nii2gif")[0].version
+__version__ = pkg_resources.require("dashQC_fmri")[0].version

@@ -1,8 +1,8 @@
 """Main entry point."""
 
 import argparse
-import viz.config as cfg
-from viz import core
+import dashQC_fmri.viz.config as cfg
+from dashQC_fmri.viz import core
 import warnings  # mainly for ignoring imageio warnings
 warnings.filterwarnings("ignore")
 

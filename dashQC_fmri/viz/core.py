@@ -7,7 +7,7 @@ import nibabel as nb
 import numpy as np
 from matplotlib.cm import get_cmap
 
-import viz.config as cfg
+import dashQC_fmri.viz.config as cfg
 
 
 def parse_filename(filepath):
