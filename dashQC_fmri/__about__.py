@@ -30,7 +30,6 @@ REQUIRES = [
     'nilearn',
     'scipy',
     'scikit-learn',
-    'scikit-image',
     'imageio'
 ]
 
