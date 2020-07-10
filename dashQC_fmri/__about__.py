@@ -29,7 +29,8 @@ REQUIRES = [
     'matplotlib',
     'nilearn',
     'scipy',
-    'scikit-learn'
+    'scikit-learn',
+    'imageio'
 ]
 
 LINKS_REQUIRES = [
