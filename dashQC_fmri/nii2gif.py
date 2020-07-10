@@ -104,7 +104,7 @@ def create_mosaic(in_img, origShape, slices=None, slicesOrder='csa'):
     maxAxis = np.max(origShape[0:3])
 
     if len(origShape) > 3:
-        if not slices:
+        if slices is None:
             slices = [int(origShape[0]/2),
                       int(origShape[1]/2),
                       int(origShape[2]*2/3)]
