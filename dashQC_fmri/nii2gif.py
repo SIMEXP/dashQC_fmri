@@ -14,7 +14,8 @@ DEFAULT_MODES = ['normal', 'pseudocolor']
 
 
 def parse_filename(in_filepath):
-    """Parse input file path into directory, basename and extension.
+    """
+    Parse input file path into directory, basename and extension.
 
     Parameters
     ----------
@@ -39,7 +40,8 @@ def parse_filename(in_filepath):
 
 
 def load_and_prepare_image(in_file):
-    """Load and prepare image data.
+    """
+    Load and prepare image data.
 
     Parameters
     ----------
@@ -81,7 +83,8 @@ def load_and_prepare_image(in_file):
 
 
 def create_mosaic(in_img, origShape, slices=DEFAULT_SLICES, slicesOrder='csa'):
-    """Create grayscale image.
+    """
+    Create grayscale image.
 
     Parameters
     ----------
@@ -137,7 +140,8 @@ def create_mosaic(in_img, origShape, slices=DEFAULT_SLICES, slicesOrder='csa'):
 
 
 def write_gif(in_file, out_filename, mode, fps, colormap, slices, slicesOrder):
-    """Procedure for writing grayscale image.
+    """
+    Procedure for writing grayscale image.
 
     Parameters
     ----------
@@ -183,7 +187,6 @@ def write_gif(in_file, out_filename, mode, fps, colormap, slices, slicesOrder):
         out_filename = in_file.replace(ext, '.gif')
 
     mimwrite(out_filename, new_img, format='gif', fps=fps)
-
 
 def create_gif(in_file, out_filename=None, mode='normal', fps=20,
                colormap='hot', slices=DEFAULT_SLICES, slicesOrder='csa'):
