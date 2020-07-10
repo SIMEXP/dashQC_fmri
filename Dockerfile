@@ -29,7 +29,7 @@ RUN conda install -y python=3.8.2 \
                      nilearn=0.6.2 \
                      matplotlib=3.1.3 \
                      joblib=0.15.1 \
-                     imageio=2.2.0 \
+                     imageio=2.9.0 \
                      tqdm=4.46.1; sync && \
     chmod -R a+rX /usr/local/miniconda; sync && \
     chmod +x /usr/local/miniconda/bin/*; sync && \

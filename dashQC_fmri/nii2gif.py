@@ -9,7 +9,6 @@ import numpy as np
 import warnings  # mainly for ignoring imageio warnings
 warnings.filterwarnings("ignore")
 
-DEFAULT_SLICES = [40, 40, 40]
 DEFAULT_MODES = ['normal', 'pseudocolor']
 
 
@@ -82,7 +81,7 @@ def load_and_prepare_image(in_file):
     return out_img, dShape
 
 
-def create_mosaic(in_img, origShape, slices=DEFAULT_SLICES, slicesOrder='csa'):
+def create_mosaic(in_img, origShape, slices=None, slicesOrder='csa'):
     """
     Create grayscale image.
 
@@ -93,7 +92,7 @@ def create_mosaic(in_img, origShape, slices=DEFAULT_SLICES, slicesOrder='csa'):
     origShape: list
         Shape of the original image.
     slices: list
-        Order of the views. [Coronal, Sagital, Axial]
+        Slices for each axis to use (only for 4D volumes)
     slicesOrder: str
         Can be csa or cas (Cortical, Sagital, Axial)
 
@@ -106,7 +105,7 @@ def create_mosaic(in_img, origShape, slices=DEFAULT_SLICES, slicesOrder='csa'):
     maxAxis = np.max(origShape[0:3])
 
     if len(origShape) > 3:
-        if slices == DEFAULT_SLICES:
+        if slices:
             slices = [int(origShape[0]/2),
                       int(origShape[1]/2),
                       int(origShape[2]*2/3)]
@@ -188,8 +187,9 @@ def write_gif(in_file, out_filename, mode, fps, colormap, slices, slicesOrder):
 
     mimwrite(out_filename, new_img, format='gif', fps=fps)
 
+
 def create_gif(in_file, out_filename=None, mode='normal', fps=20,
-               colormap='hot', slices=DEFAULT_SLICES, slicesOrder='csa'):
+               colormap='hot', slices=None, slicesOrder='csa'):
     """
     in_file: str
         Path of the file to be converted into GIF
