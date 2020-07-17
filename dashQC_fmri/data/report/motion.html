@@ -6,19 +6,24 @@
     <title>Report on fMRI motion levels</title>
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
     <!-- General styles for the dashboard -->
-    <link rel="stylesheet" type="text/css" href="assets/general/css/qc_dash.css" />
+    <link rel="stylesheet" type="text/css"
+        href="assets/general/css/qc_dash.css" />
 
     <!-- Custom style sheet for motion report -->
-    <link rel="stylesheet" type="text/css" href="assets/motion/css/motion.css" />
+    <link rel="stylesheet" type="text/css"
+        href="assets/motion/css/motion.css" />
 
     <!-- Bootstrap -->
-    <link rel="stylesheet" type="text/css" href="lib/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css"
+        href="lib/bootstrap/bootstrap.min.css" />
 
     <!-- Keen.io -->
-    <link rel="stylesheet" type="text/css" href="lib/keen/keen-dashboards.css" />
+    <link rel="stylesheet" type="text/css"
+        href="lib/keen/keen-dashboards.css" />
 
     <!-- Select 2 -->
     <link href="lib/select2/select2.min.css" rel="stylesheet" type="text/css" />
@@ -38,7 +43,8 @@
 
             <div class="navbar-header">
 
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <button type="button" class="navbar-toggle"
+                    data-toggle="collapse" data-target=".navbar-collapse">
 
                     <span class="sr-only">Toggle navigation</span>
                     <span class="icon-bar"></span>
@@ -46,16 +52,20 @@
                     <span class="icon-bar"></span>
                 </button>
 
-                <a class="navbar-brand" href="https://dashqc-fmri.readthedocs.io/en/latest/index.html">dashQC_fmri</a>
+                <a class="navbar-brand"
+                    href="https://dashqc-fmri.readthedocs.io/en/latest/index.html">dashQC_fmri</a>
 
             </div>
 
             <div class="navbar-collapse collapse">
 
                 <ul class="nav navbar-nav navbar-left">
-                    <li class="navbar_item"><a href="index.html">Summary</a></li>
-                    <li class="navbar_item"><a href="registration.html">Registration</a></li>
-                    <li class="navbar_item navbar-brand-current"><a href="motion.html">Motion</a></li>
+                    <li class="navbar_item"><a href="index.html">Summary</a>
+                    </li>
+                    <li class="navbar_item"><a
+                            href="registration.html">Registration</a></li>
+                    <li class="navbar_item navbar-brand-current"><a
+                            href="motion.html">Motion</a></li>
                 </ul>
 
             </div>
@@ -89,7 +99,7 @@
             </div>
 
             <!--  Motion visualizer in native space  -->
-            <div class="col-sm-6">
+            <!--<div class="col-sm-6">
 
                 <div class="chart-wrapper">
 
@@ -101,13 +111,38 @@
                     <div class="chart-stage" id="motionNative">
                         <img class="sliderNext" src="lib/jsImageSlider/navbuttons.png" />
                         <img class="sliderPrev" src="lib/jsImageSlider/navbuttons.png" />
-                        <canvas id="sliderNative" />
-                        <!-- <img id="spriteNative" class="hidden" src="assets/motion/images/target_native_sub0050784_session1_rest.png" /> -->
-                        <!-- <img id="spriteNative" class="hidden" src="assets/motion/images/static_figure.png" /> -->
-                    </div>
+                        <canvas id="sliderNative" />-->
+            <!-- <img id="spriteNative" class="hidden" src="assets/motion/images/target_native_sub0050784_session1_rest.png" /> -->
+            <!-- <img id="spriteNative" class="hidden" src="assets/motion/images/static_figure.png" /> -->
+            <!-- </div>
 
                     <div class="chart-notes">
                         Click the left/right arrows to go forward/backward in time.
+                    </div>
+
+                </div>
+
+            </div>//-->
+
+            <div class="col-sm-6">
+
+                <div class="chart-wrapper">
+
+                    <div class="chart-title">fMRI time frames in native space.
+                        Select a run:
+                        <select id="select-BOLD" style="width: 50%"></select>
+                    </div>
+
+                    <div class="chart-stage" id="motionNative">
+                        <!--
+                        style="background-color:white !important;">-->
+                        <!-- <img class="sliderNext" src="lib/jsImageSlider/navbuttons.png" />
+                        <img class="sliderPrev" src="lib/jsImageSlider/navbuttons.png" />
+                        <canvas id="sliderNative" /> -->
+                    </div>
+
+                    <div class="chart-notes">
+                        This is an animation of the in scanner time series.
                     </div>
 
                 </div>
@@ -134,60 +169,38 @@
             </div>
 
             <!-- Motion visualizer in stereotaxic space -->
-            <div class="col-sm-6">
+            <!--<div class="col-sm-6">
 
                 <div class="chart-wrapper">
                     <div class="chart-title">fMRI time frames in stereotaxic space</div>
                     <div class="chart-stage" id="motionStereo">
                         <img class="sliderNext" src="lib/jsImageSlider/navbuttons.png" />
                         <img class="sliderPrev" src="lib/jsImageSlider/navbuttons.png" />
-                        <canvas id="sliderStereo" />
-                        <!-- <img id="spriteStereo" class="hidden" src="assets/motion/images/motion_stereo_sub0050784_session1_rest.png" /> -->
-                    </div>
+                        <canvas id="sliderStereo" />//-->
+            <!-- <img id="spriteStereo" class="hidden" src="assets/motion/images/motion_stereo_sub0050784_session1_rest.png" /> -->
+            <!--</div>
                     <div class="chart-notes">
                         Click the left/right arrows to go forward/backward in time.
                     </div>
                 </div>
+            </div>//-->
 
-            </div>
-
-        </div>
-
-        <div class="row">
-
-            <!-- Rotation parameters plots -->
             <div class="col-sm-6">
 
                 <div class="chart-wrapper">
 
-                    <div class="chart-title">Rotation parameters</div>
+                    <div class="chart-title">MRI time frames in stereotaxic
+                        space</div>
 
-                    <div class="chart-stage">
-                        <div id="chartRot" style="width:100%"></div>
+                    <div class="chart-stage" id="motionStereo">
+                        <!--div>style="background-color:white !important;">-->
+                        <!-- <img class="sliderNext" src="lib/jsImageSlider/navbuttons.png" />
+                            <img class="sliderPrev" src="lib/jsImageSlider/navbuttons.png" />
+                            <canvas id="sliderNative" /> -->
                     </div>
 
                     <div class="chart-notes">
-                        Click to select a time point. Mouse scroll to zoom.
-                    </div>
-
-                </div>
-
-            </div>
-
-            <!-- Registration with the session/run of reference -->
-            <div class="col-sm-6">
-
-                <div class="chart-wrapper">
-
-                    <div class="chart-title">Run vs Reference volume</div>
-
-                    <div class="chart-stage" id="runVReference" style="background-color:white !important;">
-                        <div id="divRegistration" class="register">
-                        </div>
-                    </div>
-
-                    <div class="chart-notes">
-                        Hover the mouse over to switch between images.
+                        This is an animation of the coregistered time series.
                     </div>
 
                 </div>
@@ -195,6 +208,52 @@
             </div>
 
         </div>
+
+    </div>
+
+    <div class="row">
+
+        <!-- Rotation parameters plots -->
+        <div class="col-sm-6">
+
+            <div class="chart-wrapper">
+
+                <div class="chart-title">Rotation parameters</div>
+
+                <div class="chart-stage">
+                    <div id="chartRot" style="width:100%"></div>
+                </div>
+
+                <div class="chart-notes">
+                    Click to select a time point. Mouse scroll to zoom.
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Registration with the session/run of reference -->
+        <div class="col-sm-6">
+
+            <div class="chart-wrapper">
+
+                <div class="chart-title">Run vs Reference volume</div>
+
+                <div class="chart-stage" id="runVReference"
+                    style="background-color:white !important;">
+                    <div id="divRegistration" class="register">
+                    </div>
+                </div>
+
+                <div class="chart-notes">
+                    Hover the mouse over to switch between images.
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
 
     </div>
 
@@ -209,7 +268,8 @@
 
                 <div class="col-sm-12">
 
-                    <p class="small text-muted">Dashboard built with &#9829; by <a href="http://simexp-lab.org">SIMEXP Lab.</a></p>
+                    <p class="small text-muted">Dashboard built with &#9829; by
+                        <a href="http://simexp-lab.org">SIMEXP Lab.</a></p>
 
                 </div>
 
@@ -223,13 +283,15 @@
 
     <!-- D3 and C3 -->
     <script src="lib/d3js/d3.min.js" charset="utf-8"></script>
-    <script src="lib/c3js/c3.min.js"></script></head>
+    <script src="lib/c3js/c3.min.js"></script>
+    </head>
 
     <!-- jQuery -->
     <script type="text/javascript" src="lib/jquery/jquery.min.js"></script>
 
     <!-- For bootstrap -->
-    <script type="text/javascript" src="lib/bootstrap/bootstrap.min.js"></script>
+    <script type="text/javascript"
+        src="lib/bootstrap/bootstrap.min.js"></script>
 
     <!-- For keen.io -->
     <script type="text/javascript" src="lib/keen/keen.min.js"></script>
@@ -246,652 +308,675 @@
     <!-- Data for chartFD and chartNbVol -->
     <script type="text/javascript" src="assets/summary/js/fd.js"></script>
 
-    
+
     <!-- Custom dashQC JS -->
 
     <!-- QC Dashboard Objects -->
-    <script type="text/javascript" src="assets/general/js/qc_dash_objects.js"></script>
+    <script type="text/javascript"
+        src="assets/general/js/qc_dash_objects.js"></script>
 
-<script>
+    <script>
 
-// I. Declarations //
+        // I. Declarations //
 
-// Modular asset naming
-var fileAffixes = {
+        // Modular asset naming
+        var fileAffixes = {
 
-    "target": {
+            "target": {
 
-        "prefix": {
+                "prefix": {
 
-            "native": "target_native_",
-            "stereo": "target_stereo_",
-        },
-        "suffix": {
+                    "native": "target_native_",
+                    "stereo": "target_stereo_",
+                },
+                "suffix": {
 
-            "native": "_rest",
-            "stereo": "_rest",
-        },
-    },
+                    "native": "_rest",
+                    "stereo": "_rest",
+                },
+            },
 
-    "motion": {
+            "motion": {
 
-        "prefix": {
+                "prefix": {
 
-            "native": "motion_native_",
-            "stereo": "motion_stereo_",
-        },
-        "suffix": {
+                    "native": "motion_native_",
+                    "stereo": "motion_stereo_",
+                },
+                "suffix": {
 
-            "native": "_rest",
-            "stereo": "_rest",
-        },
-    },
-};
+                    "native": "_rest",
+                    "stereo": "_rest",
+                },
+            },
+        };
 
-// Constants
-var numFrame = 0; // Initially display the first time frame
-var percVisu = 0.7; // The BOLD montage use 70% of the window
-var percVisuStr = (100 * percVisu).toString() + "%";
-var imageLoadPromises = { spriteNative: null, spriteStereo: null, registration: null };
+        // Constants
+        var numFrame = 0; // Initially display the first time frame
+        var percVisu = 0.7; // The BOLD montage use 70% of the window
+        var percVisuStr = (100 * percVisu).toString() + "%";
+        var imageLoadPromises = { spriteNative: null, spriteStereo: null, registration: null };
 
-// Globals
+        // Globals
 
-// Spacers
-var spacerNative = null;
-var spacerStereo = null;
+        // Spacers
+        var spacerNative = null;
+        var spacerStereo = null;
 
-// Charts
-var chartTsl = null;
-var chartRot = null;
-var chartFd = null;
+        // Charts
+        var chartTsl = null;
+        var chartRot = null;
+        var chartFd = null;
 
-// Run data
-var runID = "";
-var runData = null;
+        // Run data
+        var runID = "";
+        var runData = null;
 
-// Experimental flags
-var drawWithGrid = false;
+        // Experimental flags
+        var drawWithGrid = false;
 
-// function imagePromise(src) {
+        // function imagePromise(src) {
 
-//     var deferred = $.Deferred();
-//     var img = new Image();
+        //     var deferred = $.Deferred();
+        //     var img = new Image();
 
-//     function resolve() {
+        //     function resolve() {
 
-//         // Resolution callbacks receive the image, which you can then inject into the DOM
-//         // to avoid triggering an extra HTTP request in IE
-//         return deferred.resolve(img);
-//     }
+        //         // Resolution callbacks receive the image, which you can then inject into the DOM
+        //         // to avoid triggering an extra HTTP request in IE
+        //         return deferred.resolve(img);
+        //     }
 
-//     // Resolution events
-//     $( img ).on( {
-//         error : deferred.reject,
-//         load  : resolve
-//     } );
+        //     // Resolution events
+        //     $( img ).on( {
+        //         error : deferred.reject,
+        //         load  : resolve
+        //     } );
 
-//     // Attach the source afterwards, since DOM synchronicity is weird:
-//     // A cached image will sometimes load or error on assignment
-//     img.src     = src;
+        //     // Attach the source afterwards, since DOM synchronicity is weird:
+        //     // A cached image will sometimes load or error on assignment
+        //     img.src     = src;
 
-//     // ...But sometimes cached images never fire load!
-//     // In this case they would already be in the DOM at this point. We need to infer it:
-//     if ( img.complete && img.naturalWidth !== undefined ) {
-//         // And then use setTimeout to resolve asynchronously (otherwise promise is broken!)
-//         setTimeout( resolve );
-//     };
+        //     // ...But sometimes cached images never fire load!
+        //     // In this case they would already be in the DOM at this point. We need to infer it:
+        //     if ( img.complete && img.naturalWidth !== undefined ) {
+        //         // And then use setTimeout to resolve asynchronously (otherwise promise is broken!)
+        //         setTimeout( resolve );
+        //     };
 
-//     return deferred.promise();
-// }
+        //     return deferred.promise();
+        // }
 
-// function loadImage(image) {
+        // function loadImage(image) {
 
-//     if ( !image ) {
+        //     if ( !image ) {
 
-//         return Promise.reject();
-//     } else if (typeof image === 'string') {
+        //         return Promise.reject();
+        //     } else if (typeof image === 'string') {
 
-//         /* Create a <img> from a string */
-//         const src = image;
-//         image = new Image();
-//         image.src = src;
-//     } else if (image.length !== undefined) {
+        //         /* Create a <img> from a string */
+        //         const src = image;
+        //         image = new Image();
+        //         image.src = src;
+        //     } else if (image.length !== undefined) {
 
-//         /* Treat as multiple images */
+        //         /* Treat as multiple images */
 
-//         // Momentarily ignore errors
-//         const reflected = [].map.call(image, img => load(img).catch(err => err));
+        //         // Momentarily ignore errors
+        //         const reflected = [].map.call(image, img => load(img).catch(err => err));
 
-//         return Promise.all(reflected).then(results => {
-//             const loaded = results.filter(x => x.naturalWidth);
-//             if (loaded.length === results.length) {
-//                 return loaded;
-//             }
-//             return Promise.reject({
-//                 loaded,
-//                 errored: results.filter(x => !x.naturalWidth)
-//             });
-//         });
-//     } else if (image.tagName !== 'IMG') {
+        //         return Promise.all(reflected).then(results => {
+        //             const loaded = results.filter(x => x.naturalWidth);
+        //             if (loaded.length === results.length) {
+        //                 return loaded;
+        //             }
+        //             return Promise.reject({
+        //                 loaded,
+        //                 errored: results.filter(x => !x.naturalWidth)
+        //             });
+        //         });
+        //     } else if (image.tagName !== 'IMG') {
 
-//         return Promise.reject();
-//     }
+        //         return Promise.reject();
+        //     }
 
-//     const promise = new Promise((resolve, reject) => {
+        //     const promise = new Promise((resolve, reject) => {
 
-//         if (image.naturalWidth) {
-//             // If the browser can determine the naturalWidth the
-//             // image is already loaded successfully
-//             resolve(image);
-//         } else if (image.complete) {
+        //         if (image.naturalWidth) {
+        //             // If the browser can determine the naturalWidth the
+        //             // image is already loaded successfully
+        //             resolve(image);
+        //         } else if (image.complete) {
 
-//             // If the image is complete but the naturalWidth is 0px
-//             // it is probably broken
-//             reject(image);
-//         } else {
+        //             // If the image is complete but the naturalWidth is 0px
+        //             // it is probably broken
+        //             reject(image);
+        //         } else {
 
-//             image.addEventListener('load', fullfill);
-//             image.addEventListener('error', fullfill);
-//         }
+        //             image.addEventListener('load', fullfill);
+        //             image.addEventListener('error', fullfill);
+        //         }
 
-//         function fullfill() {
-//             if (image.naturalWidth) {
+        //         function fullfill() {
+        //             if (image.naturalWidth) {
 
-//                 resolve(image);
-//             } else {
+        //                 resolve(image);
+        //             } else {
 
-//                 reject(image);
-//             }
-//             image.removeEventListener('load', fullfill);
-//             image.removeEventListener('error', fullfill);
-//         }
-//     });
-//     promise.image = image;
-//     return promise;
-// }
+        //                 reject(image);
+        //             }
+        //             image.removeEventListener('load', fullfill);
+        //             image.removeEventListener('error', fullfill);
+        //         }
+        //     });
+        //     promise.image = image;
+        //     return promise;
+        // }
 
-// Main drawing function
-function drawCharts(p_runID) {
+        // Main drawing function
+        function drawCharts(p_runID) {
 
-    // 1. Load spacer images, to set the size of a montage in each mosaic
-    spacerNative = new Image();
-    if ( drawWithGrid ) {
-        spacerNative.src = "assets/motion/images/" + "static_figure.png";
-    } else {
-        spacerNative.src = "assets/motion/images/" + fileAffixes.target.prefix.native +
-                           p_runID + ".png";
-    }
+            // 1. Load spacer images, to set the size of a montage in each mosaic
+            spacerNative = new Image();
+            if (drawWithGrid) {
+                spacerNative.src = "assets/motion/images/" + "static_figure.png";
+            } else {
+                spacerNative.src = "assets/motion/images/" + fileAffixes.target.prefix.native +
+                    p_runID + ".gif";
+            }
 
-    spacerStereo = new Image();
-    spacerStereo.src = "assets/motion/images/" + fileAffixes.target.prefix.stereo +
-                       p_runID + ".png";
+            spacerStereo = new Image();
+            spacerStereo.src = "assets/motion/images/" + fileAffixes.target.prefix.stereo +
+                p_runID + ".png";
 
-    // 2. Change img src values and create promises to detect when they finish loading
-    if ( drawWithGrid ) {
-        $("#spriteNative").attr("src", "assets/motion/images/" + "small_grid_figure.png");
-    } else {
-        $("#spriteNative").attr("src", "assets/motion/images/" +
-                            fileAffixes.motion.prefix.native + p_runID + ".png");
-    }
-    // imageLoadPromises.spriteNative = $("#spriteNative").load().promise();
+            // 2. Change img src values and create promises to detect when they finish loading
+            if (drawWithGrid) {
+                $("#spriteNative").attr("src", "assets/motion/images/" + "small_grid_figure.png");
+            } else {
+                $("#spriteNative").attr("src", "assets/motion/images/" +
+                    fileAffixes.motion.prefix.native + p_runID + ".gif");
+            }
+            // imageLoadPromises.spriteNative = $("#spriteNative").load().promise();
 
-    $("#spriteStereo").attr("src", "assets/motion/images/" +
-                            fileAffixes.motion.prefix.stereo + p_runID + ".png");
-    // imageLoadPromises.spriteStereo = $("#spriteStereo").load().promise();
+            $("#spriteStereo").attr("src", "assets/motion/images/" +
+                fileAffixes.motion.prefix.stereo + p_runID + ".gif");
+            // imageLoadPromises.spriteStereo = $("#spriteStereo").load().promise();
 
-    $("#registration").attr("src", "assets/motion/images/" +
-                            fileAffixes.target.prefix.stereo + p_runID + ".png");
-    // imageLoadPromises.registration = $("#registration").load().promise();
+            $("#registration").attr("src", "assets/motion/images/" +
+                fileAffixes.target.prefix.stereo + p_runID + ".png");
+            // imageLoadPromises.registration = $("#registration").load().promise();
 
 
-    // c3.js data for the translation, rotation, and FD parameters charts
-    // chartTsl = new QCDash_LineChart(tsl, "chartTsl", "Time (TRs)", "Translation (mm)");
-    // chartTsl.generate();
-    // chartRot = new QCDash_LineChart(rot, "chartRot", "Time (TRs)", "Rotation (degrees))");
-    // chartRot.generate();
-    // chartFd = new QCDash_LineChart(fd, "chartFd", "Time (TRs)", "Frame displacement (pseudo mm))");
-    // chartFd.generate();
+            // c3.js data for the translation, rotation, and FD parameters charts
+            // chartTsl = new QCDash_LineChart(tsl, "chartTsl", "Time (TRs)", "Translation (mm)");
+            // chartTsl.generate();
+            // chartRot = new QCDash_LineChart(rot, "chartRot", "Time (TRs)", "Rotation (degrees))");
+            // chartRot.generate();
+            // chartFd = new QCDash_LineChart(fd, "chartFd", "Time (TRs)", "Frame displacement (pseudo mm))");
+            // chartFd.generate();
 
-    var imgsLoaded = { spriteNative: false, spriteStereo: false, registration: false };
-    $("#spriteNative").on("load", function() {
+            var imgsLoaded = { spriteNative: false, spriteStereo: false, registration: false };
+            $("#spriteNative").on("load", function () {
 
-        imgsLoaded.spriteNative = true;
-        if ( imgsLoaded.spriteNative && imgsLoaded.spriteStereo && imgsLoaded.registration ) {
+                imgsLoaded.spriteNative = true;
+                if (imgsLoaded.spriteNative && imgsLoaded.spriteStereo && imgsLoaded.registration) {
 
-            imgsLoaded.spriteNative = imgsLoaded.spriteStereo = imgsLoaded.registration = false;
+                    imgsLoaded.spriteNative = imgsLoaded.spriteStereo = imgsLoaded.registration = false;
 
-            finishDrawCharts(p_runID);
+                    finishDrawCharts(p_runID);
+                }
+            });
+            $("#spriteStereo").on("load", function () {
+
+                imgsLoaded.spriteStereo = true;
+                if (imgsLoaded.spriteNative && imgsLoaded.spriteStereo && imgsLoaded.registration) {
+
+                    imgsLoaded.spriteNative = imgsLoaded.spriteStereo = imgsLoaded.registration = false;
+
+                    finishDrawCharts(p_runID);
+                }
+            });
+            $("#registration").on("load", function () {
+
+                imgsLoaded.registration = true;
+                if (imgsLoaded.spriteNative && imgsLoaded.spriteStereo && imgsLoaded.registration) {
+
+                    imgsLoaded.spriteNative = imgsLoaded.spriteStereo = imgsLoaded.registration = false;
+
+                    finishDrawCharts(p_runID);
+                }
+            });
+
+            // Make sure images are loaded before proceeding with the rest of drawCharts
+            // imagePromise($("#spriteNative").attr("src")).then(function() {
+
+            // $.when(imageLoadPromises.spriteNative,
+            //        imageLoadPromises.spriteStereo,
+            //        imageLoadPromises.registration).then(function() {
+
+            //         console.log("Promises fulfilled!");
+
+            //         // Trigger the building of motion movies
+            //         selectTime(0);
+
+            //         // Set the size of the registration figure in tune with motion movies
+            // //         $("#registration").width(myPercVisuStr);
+
+            //         // Add background image with correct size in the registration figure
+            //         figRegistration = $("#divRegistration");
+            //         figRegistration.css("backgroundImage",
+            //                             "url('assets/motion/images/" + fileAffixes.target.prefix.stereo +
+            //                             p_runID + ".png')");
+            //         figRegistration.css("backgroundSize", myPercVisuStr);
+            //         figRegistration.css("backgroundPosition", "center");
+            //         figRegistration.css("backgroundRepeat", "no-repeat");
+
+
+            //         // Resize the rotation chart, which is not tweaked by selectTime
+            //         // (unlike the FD and translation charts)
+            //         chartRot.m_chartRef.resize({ height: $("#registration").height() });
+            //     }
+            // );
         }
-    });
-    $("#spriteStereo").on("load", function() {
 
-        imgsLoaded.spriteStereo = true;
-        if ( imgsLoaded.spriteNative && imgsLoaded.spriteStereo && imgsLoaded.registration ) {
+        function finishDrawCharts(p_runID) {
 
-            imgsLoaded.spriteNative = imgsLoaded.spriteStereo = imgsLoaded.registration = false;
+            chartTsl = new QCDash_LineChart(tsl, "chartTsl", "Time (TRs)", "Translation (mm)");
+            chartTsl.generate();
+            chartRot = new QCDash_LineChart(rot, "chartRot", "Time (TRs)", "Rotation (degrees)");
+            chartRot.generate();
+            chartFd = new QCDash_LineChart(fd, "chartFd", "Time (TRs)", "Frame displacement (pseudo mm))");
+            chartFd.generate();
 
-            finishDrawCharts(p_runID);
+            // Trigger the building of motion movies
+            selectTime(0);
+
+            // Set the size of the registration figure in tune with motion movies
+            $("#registration").width(percVisuStr);
+
+            // Add background image with correct size in the registration figure
+            figRegistration = $("#divRegistration");
+            figRegistration.css("backgroundImage",
+                "url('assets/motion/images/" + fileAffixes.target.prefix.stereo +
+                p_runID + ".png')");
+            figRegistration.css("backgroundSize", percVisuStr);
+            figRegistration.css("backgroundPosition", "center");
+            figRegistration.css("backgroundRepeat", "no-repeat");
+
+            imgMotionNative = $("#spriteNative");
+            imgMotionNative.css("width", $("#registration").width());
+            imgMotionNative.css("height", "auto");
+
+            imgMotionStereo = $("#spriteStereo");
+            imgMotionStereo.css("width", $("#registration").width());
+            imgMotionStereo.css("height", "auto");
+
+            // Resize the rotation chart, which is not tweaked by selectTime
+            // (unlike the FD and translation charts)
+            // chartRot.m_chartRef.resize({ height: $("#registration").height() });
+
         }
-    });
-    $("#registration").on("load", function() {
 
-        imgsLoaded.registration = true;
-        if ( imgsLoaded.spriteNative && imgsLoaded.spriteStereo && imgsLoaded.registration ) {
+        // II. Utility functions
 
-            imgsLoaded.spriteNative = imgsLoaded.spriteStereo = imgsLoaded.registration = false;
+        // Function to draw volumes for a particular time frame.
+        // Update canvas based on two big mosaic files
+        // Native: images in native space, prior to motion correction
+        // Stereo: images in stereostaxic space, after motion correction
+        // function drawMotion(p_frame, p_type) {
 
-            finishDrawCharts(p_runID);
+        //     var canvas = document.getElementById("slider" + p_type);
+        //     var wImg = $("#slider" + p_type).parent().width();
+        //     var wSpacer = { Native: spacerNative.width, Stereo: spacerStereo.width };
+        //     var hSpacer = { Native: spacerNative.height, Stereo: spacerStereo.height };
+        //     var nbTimeFrames = Math.floor((document.getElementById("spriteStereo").width / wSpacer.Native) - 1);
+        //     var rSpacer = hSpacer[p_type] / wSpacer[p_type];
+        //     var hImg = Math.round(wImg * percVisu * rSpacer);
+
+        //     // Get number of time frames
+        //     if ( canvas.width != wImg ) {
+
+        //         canvas.width = wImg;
+        //         canvas.height = hImg;
+        //     }
+
+        //     var ctx = canvas.getContext("2d");
+        //     ctx.clearRect(0, 0, canvas.width, canvas.height);
+        //     ctx.drawImage(document.getElementById("sprite" + p_type),
+        //                   p_frame * wSpacer[p_type],
+        //                   0,
+        //                   wSpacer[p_type],
+        //                   hSpacer[p_type],
+        //                   wImg * (1 - percVisu) / 2,
+        //                   0,
+        //                   wImg * percVisu,
+        //                   hImg);
+        //     ctx.fillStyle = "#ffffff";
+        //     ctx.fillText("Frame number " + p_frame + "/" + nbTimeFrames,
+        //                  wImg * 1.2 * (1 - percVisu) / 2,
+        //                  0.05 * hImg);
+        //     numFrame = p_frame;
+        //     return hImg;
+        // }
+
+        // Find run ID number in provided data given a run name
+        function findRunIDFromName(p_data, p_run) {
+
+            let foundID = null;
+            for (let index = 0; index < p_data.length; index++) {
+
+                if (p_data[index].text === p_run) {
+
+                    foundID = p_data[index].id;
+                    break;
+                }
+            }
+
+            return foundID;
         }
-    });
 
-    // Make sure images are loaded before proceeding with the rest of drawCharts
-    // imagePromise($("#spriteNative").attr("src")).then(function() {
+        // Function to parse the page parameters
+        function getParameterByName(p_name, p_url) {
 
-    // $.when(imageLoadPromises.spriteNative,
-    //        imageLoadPromises.spriteStereo,
-    //        imageLoadPromises.registration).then(function() {
+            if (!p_url) {
 
-    //         console.log("Promises fulfilled!");
+                p_url = window.location.href;
+            }
 
-    //         // Trigger the building of motion movies
-    //         selectTime(0);
+            p_name = p_name.replace(/[\[\]]/g, "\\$&");
+            var regex = new RegExp("[?&]" + p_name + "(=([^&#]*)|&|#|$)"),
+                results = regex.exec(p_url);
 
-    //         // Set the size of the registration figure in tune with motion movies
-    // //         $("#registration").width(myPercVisuStr);
+            if (!results) {
 
-    //         // Add background image with correct size in the registration figure
-    //         figRegistration = $("#divRegistration");
-    //         figRegistration.css("backgroundImage",
-    //                             "url('assets/motion/images/" + fileAffixes.target.prefix.stereo +
-    //                             p_runID + ".png')");
-    //         figRegistration.css("backgroundSize", myPercVisuStr);
-    //         figRegistration.css("backgroundPosition", "center");
-    //         figRegistration.css("backgroundRepeat", "no-repeat");
+                return null;
+            }
 
+            if (!results[2]) {
 
-    //         // Resize the rotation chart, which is not tweaked by selectTime
-    //         // (unlike the FD and translation charts)
-    //         chartRot.m_chartRef.resize({ height: $("#registration").height() });
-    //     }
-    // );
-}
+                return '';
+            }
 
-function finishDrawCharts(p_runID) {
-
-    chartTsl = new QCDash_LineChart(tsl, "chartTsl", "Time (TRs)", "Translation (mm)");
-    chartTsl.generate();
-    chartRot = new QCDash_LineChart(rot, "chartRot", "Time (TRs)", "Rotation (degrees)");
-    chartRot.generate();
-    chartFd = new QCDash_LineChart(fd, "chartFd", "Time (TRs)", "Frame displacement (pseudo mm))");
-    chartFd.generate();
-
-    // Trigger the building of motion movies
-    selectTime(0);
-
-    // Set the size of the registration figure in tune with motion movies
-    $("#registration").width(percVisuStr);
-
-    // Add background image with correct size in the registration figure
-    figRegistration = $("#divRegistration");
-    figRegistration.css("backgroundImage",
-                        "url('assets/motion/images/" + fileAffixes.target.prefix.stereo +
-                        p_runID + ".png')");
-    figRegistration.css("backgroundSize", percVisuStr);
-    figRegistration.css("backgroundPosition", "center");
-    figRegistration.css("backgroundRepeat", "no-repeat");
-
-    // Resize the rotation chart, which is not tweaked by selectTime
-    // (unlike the FD and translation charts)
-    chartRot.m_chartRef.resize({ height: $("#registration").height() });
-
-}
-
-// II. Utility functions
-
-// Function to draw volumes for a particular time frame.
-// Update canvas based on two big mosaic files
-// Native: images in native space, prior to motion correction
-// Stereo: images in stereostaxic space, after motion correction
-function drawMotion(p_frame, p_type) {
-
-    var canvas = document.getElementById("slider" + p_type);
-    var wImg = $("#slider" + p_type).parent().width();
-    var wSpacer = { Native: spacerNative.width, Stereo: spacerStereo.width };
-    var hSpacer = { Native: spacerNative.height, Stereo: spacerStereo.height };
-    var nbTimeFrames = Math.floor((document.getElementById("spriteStereo").width / wSpacer.Native) - 1);
-    var rSpacer = hSpacer[p_type] / wSpacer[p_type];
-    var hImg = Math.round(wImg * percVisu * rSpacer);
-
-    // Get number of time frames
-    if ( canvas.width != wImg ) {
-
-        canvas.width = wImg;
-        canvas.height = hImg;
-    }
-
-    var ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(document.getElementById("sprite" + p_type),
-                  p_frame * wSpacer[p_type],
-                  0,
-                  wSpacer[p_type],
-                  hSpacer[p_type],
-                  wImg * (1 - percVisu) / 2,
-                  0,
-                  wImg * percVisu,
-                  hImg);
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText("Frame number " + p_frame + "/" + nbTimeFrames,
-                 wImg * 1.2 * (1 - percVisu) / 2,
-                 0.05 * hImg);
-    numFrame = p_frame;
-    return hImg;
-}
-
-// Find run ID number in provided data given a run name
-function findRunIDFromName(p_data, p_run) {
-
-    let foundID = null;
-    for ( let index = 0; index < p_data.length; index++ ) {
-
-        if ( p_data[index].text === p_run ) {
-
-            foundID = p_data[index].id;
-            break;
+            return decodeURIComponent(results[2].replace(/\+/g, " "));
         }
-    }
 
-    return foundID;
-}
+        // Creates links to motion report attached to the bars in chartMotion chartBrain and chartIntra
+        function selectRun(d, chart) {
 
-// Function to parse the page parameters
-function getParameterByName(p_name, p_url) {
+            run = chart.internal.config.axis_x_categories[d.x];
 
-    if ( !p_url ) {
+            var win = window.open(["motion_report_" + run + ".html"], "_blank");
 
-        p_url = window.location.href;
-    }
+            if (win) {
 
-    p_name = p_name.replace(/[\[\]]/g, "\\$&");
-    var regex = new RegExp("[?&]" + p_name + "(=([^&#]*)|&|#|$)"),
-        results = regex.exec(p_url);
+                // Browser has allowed it to be opened
+                win.focus();
+            } else {
 
-    if ( !results ) {
-
-        return null;
-    }
-
-    if ( !results[2] ) {
-
-        return '';
-    }
-
-    return decodeURIComponent(results[2].replace(/\+/g, " "));
-}
-
-// Creates links to motion report attached to the bars in chartMotion chartBrain and chartIntra
-function selectRun(d, chart) {
-
-    run = chart.internal.config.axis_x_categories[d.x];
-
-    var win = window.open(["motion_report_" + run + ".html"], "_blank");
-
-    if ( win ) {
-
-        // Browser has allowed it to be opened
-        win.focus();
-    } else {
-
-        // Browser has blocked it
-        alert("Please allow popups for this website");
-    }
-}
-
-// Function to select a time frame. It calls the drawing of canvas,
-// select the correct time point in the graphs, and also resize
-// the translation and rotation graphs based on the corresponding movies.
-function selectTime(p_frame) {
-
-    var hImgNative = null;
-    if ( drawWithGrid ) {
-        hImgNative = drawMotion_Grid(p_frame, "Native");
-    } else {
-        hImgNative = drawMotion(p_frame, "Native");
-    }
-    if ( $("#chartFd").height() != hImgNative ) {
-
-        chartFd.m_chartRef.resize({ height: hImgNative });
-    }
-
-    let hImgStereo = drawMotion(p_frame, "Stereo");
-    if ( $("#chartTsl").height() != hImgStereo ) {
-
-        chartTsl.m_chartRef.resize({ height: hImgStereo });
-    }
-
-    chartTsl.m_chartRef.select(["motion_tx" , "motion_ty" , "motion_tz"], [p_frame], true);
-    chartRot.m_chartRef.select(["motion_rx" , "motion_ry" , "motion_rz"], [p_frame], true);
-    chartFd.m_chartRef.select(["FD" , "scrub" ], [p_frame], true);
-}
-
-// Function to move forward by one time sample
-function nextTime() {
-
-    var nextFrame = numFrame + 1;
-
-    // Get number of time frames
-    var nbTimeFrames = ((document.getElementById("spriteNative").width / spacerNative.width) *
-                        (document.getElementById("spriteNative").height / spacerNative.height)) - 1;
-
-    if ( nextFrame > nbTimeFrames ) {
-
-        return;
-    } else {
-
-        selectTime(nextFrame);
-    }
-}
-
-// Function to move back by one time sample
-function prevTime() {
-
-    prevFrame = numFrame - 1;
-    if ( prevFrame < 0 ) {
-
-        return;
-    } else {
-
-        selectTime(prevFrame);
-    }
-}
-
-// Grid solution for frame drawing
-function drawMotion_Grid(frame, type) {
-
-    var canvas = document.getElementById("slider" + type);
-    var wImg = $("#slider" + type).parent().width();
-    var wSpacer = { Native: spacerNative.width, Stereo: spacerStereo.width };
-    var hSpacer = { Native: spacerNative.height, Stereo: spacerStereo.height };
-    var imageGridDims = { rows: Math.floor(document.getElementById("spriteNative").height / hSpacer.Native),
-                          columns: Math.floor(document.getElementById("spriteNative").width / wSpacer.Native) };
-    var nbTimeFrames = Math.floor((imageGridDims.rows * imageGridDims.columns) - 1);
-    var rSpacer = hSpacer[type] / wSpacer[type];
-    var hImg = Math.round(wImg * percVisu * rSpacer);
-
-    // Get number of time frames
-    if ( canvas.width != wImg ) {
-
-        canvas.width = wImg;
-        canvas.height = hImg;
-    }
-
-    var ctx = canvas.getContext("2d");
-    var currentRow = Math.floor(frame / imageGridDims.columns);
-
-    // console.log("Drawing frame: " + frame.toString() + " for current row: " + currentRow.toString());
-    // console.log("\tat (" + ((frame / (currentRow + 1)) * wSpacer[type]).toString() + "," + (currentRow * hImg).toString() + ")")
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(document.getElementById("sprite" + type),
-                  (frame / (currentRow + 1)) * wSpacer[type],
-                  currentRow * hImg,
-                  wSpacer[type],
-                  hSpacer[type],
-                  wImg * (1 - percVisu) / 2,
-                  0,
-                  wImg * percVisu,
-                  hImg);
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText("Frame number " + frame + "/" + nbTimeFrames,
-                 wImg * 1.2 * (1 - percVisu) / 2,
-                 0.05 * hImg);
-    numFrame = frame;
-    return hImg;
-}
-
-// III. Events //
-
-// Associate the arrows of the slider with backward/forward time shifts
-document.getElementsByClassName("sliderNext")[0].onclick = nextTime;
-document.getElementsByClassName("sliderNext")[1].onclick = nextTime;
-document.getElementsByClassName("sliderPrev")[0].onclick = prevTime;
-document.getElementsByClassName("sliderPrev")[1].onclick = prevTime;
-
-// Add key bindings, left/right arrow to move backward/forward in time
-function reactKey(p_key) {
-
-    switch ( p_key ) {
-
-        // Left arrow key
-        case 37:
-            prevTime();
-            break;
-
-        // Right arrow key
-        case 39:
-            nextTime();
-            break;
-    }
-}
-window.onkeydown = function(p_event) {
-
-    reactKey(p_event.keyCode)
-};
-
-// IV. On load, add events for interface and build all figures
-$(window).on("load", function() {
-
-    // Check for run ID in query string (ex. sub200331_sessInitialMRI_taskrestrun001)
-    let run = { name: getParameterByName("id"), index: 0, id: "1" };
-    if ( run.name ) {
-
-        run.id = findRunIDFromName(dataRun, run.name);
-        if ( run.id ) {
-            run.index = parseInt(run.id) - 1;
+                // Browser has blocked it
+                alert("Please allow popups for this website");
+            }
         }
-    }
 
-    // console.log("Selecting run " + run.name + " with ID " + run.id + " and index " + run.index);
+        // Function to select a time frame. It calls the drawing of canvas,
+        // select the correct time point in the graphs, and also resize
+        // the translation and rotation graphs based on the corresponding movies.
+        function selectTime(p_frame) {
 
-    // Add initial images
-    let imageFolder = "assets/motion/images/";
-    d3.select("#motionNative").append("img")
-                              .classed("hidden", true)
-                              .attr("id", "spriteNative")
-                              .attr("src", imageFolder + "target_native_" + dataRun[run.index].text + ".png");
-    d3.select("#motionStereo").append("img")
-                              .classed("hidden", true)
-                              .attr("id", "spriteStereo")
-                              .attr("src", imageFolder + "motion_stereo_" + dataRun[run.index].text + ".png");
-    d3.select("#divRegistration").append("img")
-                                 .attr("id", "registration")
-                                 .attr("src", imageFolder + "target_stereo_" + dataRun[run.index].text + ".png")
-                                 .style("display", "block")
-                                 .style("margin-left", "auto")
-                                 .style("margin-right", "auto");
+            var hImgNative = null;
+            // if ( drawWithGrid ) {
+            //     hImgNative = drawMotion_Grid(p_frame, "Native");
+            // } else {
+            //     hImgNative = drawMotion(p_frame, "Native");
+            // }
+            // if ( $("#chartFd").height() != hImgNative ) {
 
-    // $("#spriteNative").load(function() {
+            //     chartFd.m_chartRef.resize({ height: hImgNative });
+            // }
 
-    //     selectTime(0);
-    // });
+            // let hImgStereo = drawMotion(p_frame, "Stereo");
+            // if ( $("#chartTsl").height() != hImgStereo ) {
 
-    // Create a button to select a new session
-    var $eventSelect = $("#select-BOLD");
-    $eventSelect.select2({
+            //     chartTsl.m_chartRef.resize({ height: hImgStereo });
+            // }
 
-        placeholder: "Select a new session",
-        data: dataRun
-    });
+            chartTsl.m_chartRef.select(["motion_tx", "motion_ty", "motion_tz"], [p_frame], true);
+            chartRot.m_chartRef.select(["motion_rx", "motion_ry", "motion_rz"], [p_frame], true);
+            chartFd.m_chartRef.select(["FD", "scrub"], [p_frame], true);
+        }
 
-    $eventSelect.on("select2:select", function(e) {
+        // Function to move forward by one time sample
+        function nextTime() {
 
-        var id = e.params.data.id;
+            var nextFrame = numFrame + 1;
 
-        if ( id > 0 ) {
+            // Get number of time frames
+            // var nbTimeFrames = ((document.getElementById("spriteNative").width / spacerNative.width) *
+            //                     (document.getElementById("spriteNative").height / spacerNative.height)) - 1;
 
-            subject = $("#select-BOLD option[value=" + id + "]").text();
+            if (nextFrame > nbTimeFrames) {
 
-            // Old individual motion report HTMLs
-            // location.assign(["motion_report_" + subject + ".html"]);
+                return;
+            } else {
 
-            // Dynamically load dataMotion_<runID>.js file,
-            // and draw charts on script load.
-            // vars tsl, rot, and fd are replaced in the global scope
-            var script = document.createElement("script");
-            script.onload = function(){
+                selectTime(nextFrame);
+            }
+        }
 
-                drawCharts(subject);
+        // Function to move back by one time sample
+        function prevTime() {
 
-                // On window resizing, trigger a re-size of all graphs
-                window.addEventListener("resize", function() {
+            prevFrame = numFrame - 1;
+            if (prevFrame < 0) {
 
-                    selectTime(numFrame);
-                    chartRot.m_chartRef.resize({ height: $("#registration").height() });
-                });
+                return;
+            } else {
+
+                selectTime(prevFrame);
+            }
+        }
+
+        // Grid solution for frame drawing
+        function drawMotion_Grid(frame, type) {
+
+            var canvas = document.getElementById("slider" + type);
+            var wImg = $("#slider" + type).parent().width();
+            var wSpacer = { Native: spacerNative.width, Stereo: spacerStereo.width };
+            var hSpacer = { Native: spacerNative.height, Stereo: spacerStereo.height };
+            var imageGridDims = {
+                rows: Math.floor(document.getElementById("spriteNative").height / hSpacer.Native),
+                columns: Math.floor(document.getElementById("spriteNative").width / wSpacer.Native)
             };
-            script.src = "assets/motion/js/dataMotion_" + subject + ".js";
+            var nbTimeFrames = Math.floor((imageGridDims.rows * imageGridDims.columns) - 1);
+            var rSpacer = hSpacer[type] / wSpacer[type];
+            var hImg = Math.round(wImg * percVisu * rSpacer);
 
-            document.head.appendChild(script);
+            // Get number of time frames
+            if (canvas.width != wImg) {
 
-            // Alternate JSON data files
-            // runID = subject.substr(0, subject.lastIndexOf("_"));
-            // d3.json("assets/motion/json/dataMotion_" + subject + ".json", function(p_error, p_data) {
+                canvas.width = wImg;
+                canvas.height = hImg;
+            }
 
-            //     runData = p_data;
-            //     drawCharts(runID, runData);
+            var ctx = canvas.getContext("2d");
+            var currentRow = Math.floor(frame / imageGridDims.columns);
 
-            //     // On window resizing, trigger a re-size of all graphs
-            //     window.addEventListener("resize", function() {
+            // console.log("Drawing frame: " + frame.toString() + " for current row: " + currentRow.toString());
+            // console.log("\tat (" + ((frame / (currentRow + 1)) * wSpacer[type]).toString() + "," + (currentRow * hImg).toString() + ")")
 
-            //         selectTime(numFrame);
-            //         chartRot.resize({ height: $("#registration").height() });
-            //     });
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(document.getElementById("sprite" + type),
+                (frame / (currentRow + 1)) * wSpacer[type],
+                currentRow * hImg,
+                wSpacer[type],
+                hSpacer[type],
+                wImg * (1 - percVisu) / 2,
+                0,
+                wImg * percVisu,
+                hImg);
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText("Frame number " + frame + "/" + nbTimeFrames,
+                wImg * 1.2 * (1 - percVisu) / 2,
+                0.05 * hImg);
+            numFrame = frame;
+            return hImg;
+        }
 
+        // III. Events //
+
+        // Associate the arrows of the slider with backward/forward time shifts
+        // document.getElementsByClassName("sliderNext")[0].onclick = nextTime;
+        // document.getElementsByClassName("sliderNext")[1].onclick = nextTime;
+        // document.getElementsByClassName("sliderPrev")[0].onclick = prevTime;
+        // document.getElementsByClassName("sliderPrev")[1].onclick = prevTime;
+
+        // Add key bindings, left/right arrow to move backward/forward in time
+        function reactKey(p_key) {
+
+            switch (p_key) {
+
+                // Left arrow key
+                case 37:
+                    prevTime();
+                    break;
+
+                // Right arrow key
+                case 39:
+                    nextTime();
+                    break;
+            }
+        }
+        // window.onkeydown = function (p_event) {
+
+        //     reactKey(p_event.keyCode)
+        // };
+
+        // IV. On load, add events for interface and build all figures
+        $(window).on("load", function () {
+
+            // Check for run ID in query string (ex. sub200331_sessInitialMRI_taskrestrun001)
+            let run = { name: getParameterByName("id"), index: 0, id: "1" };
+            if (run.name) {
+
+                run.id = findRunIDFromName(dataRun, run.name);
+                if (run.id) {
+                    run.index = parseInt(run.id) - 1;
+                }
+            }
+
+            // console.log("Selecting run " + run.name + " with ID " + run.id + " and index " + run.index);
+
+            // Add initial images
+            let imageFolder = "assets/motion/images/";
+            d3.select("#divRegistration").append("img")
+                .attr("id", "registration")
+                .attr("src", imageFolder + "target_stereo_" + dataRun[run.index].text + ".png")
+                .style("display", "block")
+                .style("margin-left", "auto")
+                .style("margin-right", "auto");
+            // d3.select("#motionNative").append("img")
+            //                           .classed("hidden", true)
+            //                           .attr("id", "spriteNative")
+            //                           .attr("src", imageFolder + "target_native_" + dataRun[run.index].text + ".gif"); // dataRun[run.index].text + ".png");
+            d3.select("#motionNative").append("img")
+                .attr("id", "spriteNative")
+                .style("display", "block")
+                .style("margin-left", "auto")
+                .style("margin-right", "auto")
+                .attr("src", imageFolder + "target_native_" + dataRun[run.index].text + ".gif");
+            // d3.select("#motionStereo").append("img")
+            //                           .classed("hidden", true)
+            //                           .attr("id", "spriteStereo")
+            //                           .attr("src", imageFolder + "motion_stereo_" + dataRun[run.index].text + ".gif"); // dataRun[run.index].text + ".png");
+            d3.select("#motionStereo").append("img")
+                .attr("id", "spriteStereo")
+                .style("display", "block")
+                .style("margin-left", "auto")
+                .style("margin-right", "auto")
+                .attr("src", imageFolder + "motion_stereo_" + dataRun[run.index].text + ".gif"); // dataRun[run.index].text + ".png");
+
+            // $("#spriteNative").load(function() {
+
+            //     selectTime(0);
             // });
-        }
-    });
 
-    // Select the first run in the dropdown and trigger select event
-    $eventSelect.val(run.id);
-    $eventSelect.trigger("change");
-    $eventSelect.trigger({
+            // Create a button to select a new session
+            var $eventSelect = $("#select-BOLD");
+            $eventSelect.select2({
 
-        type: "select2:select",
-        params: {
-            data: dataRun[run.index]
-        }
-    });
+                placeholder: "Select a new session",
+                data: dataRun
+            });
 
-    // Force window resize for redraw
-    setTimeout(function(){
+            $eventSelect.on("select2:select", function (e) {
 
-        $("#motionNative").hide().show(0);
-        $("#motionStereo").hide().show(0);
-    }, 1000);
+                var id = e.params.data.id;
 
-});
+                if (id > 0) {
 
-</script>
+                    subject = $("#select-BOLD option[value=" + id + "]").text();
+
+                    // Old individual motion report HTMLs
+                    // location.assign(["motion_report_" + subject + ".html"]);
+
+                    // Dynamically load dataMotion_<runID>.js file,
+                    // and draw charts on script load.
+                    // vars tsl, rot, and fd are replaced in the global scope
+                    var script = document.createElement("script");
+                    script.onload = function () {
+
+                        drawCharts(subject);
+
+                        // On window resizing, trigger a re-size of all graphs
+                        window.addEventListener("resize", function () {
+
+                            selectTime(numFrame);
+                            chartRot.m_chartRef.resize({ height: $("#registration").height() });
+                        });
+                    };
+                    script.src = "assets/motion/js/dataMotion_" + subject + ".js";
+
+                    document.head.appendChild(script);
+
+                    // Alternate JSON data files
+                    // runID = subject.substr(0, subject.lastIndexOf("_"));
+                    // d3.json("assets/motion/json/dataMotion_" + subject + ".json", function(p_error, p_data) {
+
+                    //     runData = p_data;
+                    //     drawCharts(runID, runData);
+
+                    //     // On window resizing, trigger a re-size of all graphs
+                    //     window.addEventListener("resize", function() {
+
+                    //         selectTime(numFrame);
+                    //         chartRot.resize({ height: $("#registration").height() });
+                    //     });
+
+                    // });
+                }
+            });
+
+            // Select the first run in the dropdown and trigger select event
+            $eventSelect.val(run.id);
+            $eventSelect.trigger("change");
+            $eventSelect.trigger({
+
+                type: "select2:select",
+                params: {
+                    data: dataRun[run.index]
+                }
+            });
+
+            // Force window resize for redraw
+            setTimeout(function () {
+
+                $("#motionNative").hide().show(0);
+                $("#motionStereo").hide().show(0);
+            }, 1000);
+
+        });
+
+    </script>
 
 </body>
 

@@ -6,6 +6,7 @@ RUN apt-get update && \
     bzip2 \
     ca-certificates \
     git \
+    imagemagick \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Installing and setting up miniconda

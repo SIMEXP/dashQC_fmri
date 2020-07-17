@@ -1,3 +1,11 @@
+import sys
+import os
+
+PACKAGE_PARENT = '..'
+SCRIPT_DIR = os.path.dirname(os.path.realpath(
+    os.path.join(os.getcwd(), os.path.expanduser(__file__))))
+sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
+
 import re
 import json
 import time
@@ -14,6 +22,7 @@ import subprocess as sb
 from distutils import dir_util
 from nilearn import image as ni
 from matplotlib import gridspec
+from dashQC_fmri.movie_maker import make_gif
 from sklearn import metrics as skm
 from nilearn import plotting as nlp
 from joblib import Parallel, delayed
@@ -41,8 +50,8 @@ def get_report_lookup():
                      'fig_sub_anat_reg_outline': 'registration/images/{}_anat.png',
                      'fig_run_ref_raw': 'motion/images/target_native_{}.png',
                      'fig_run_ref_prep': 'motion/images/target_stereo_{}.png',
-                     'fig_run_mot_raw': 'motion/images/motion_native_{}.png',
-                     'fig_run_mot_prep': 'motion/images/motion_stereo_{}.png',
+                     'fig_run_mot_raw': 'motion/images/motion_native_{}.gif',
+                     'fig_run_mot_prep': 'motion/images/motion_stereo_{}.gif',
                      'report_timestamp': 'registration/js/datasetID.js'
                      }
     return report_lookup
@@ -342,10 +351,12 @@ def process_subject(sub_d, asset_p, sub_name, clobber=True):
                                  ol['fig_run_ref_prep'].format(run_name), dpi=100)
             fig_func_ref.savefig(asset_p /
                                  ol['fig_run_ref_raw'].format(run_name), dpi=100)
-            fig_func_ref.savefig(asset_p /
-                                 ol['fig_run_mot_prep'].format(run_name), dpi=100)
-            fig_func_ref.savefig(asset_p /
-                                 ol['fig_run_mot_raw'].format(run_name), dpi=100)
+            # Make GIFs for the movies
+            make_gif(run_d['preproc'], str(asset_p /
+                     ol['fig_run_mot_raw'].format(run_name)))
+            make_gif(run_d['preproc'], str(asset_p /
+                     ol['fig_run_mot_prep'].format(run_name)))
+    plt.close('all')
 
 
 def get_run_name(path_str): 
@@ -607,6 +618,7 @@ def generate_dashboard(prep_p, report_p, clobber=True,
     fig_t1_group_average.savefig(str(asset_p / ol['fig_avg_t1']), dpi=300)
     fig_template.savefig(str(asset_p / ol['fig_template']), dpi=300)
     fig_template_outline.savefig(str(asset_p / ol['fig_template_outline']), dpi=300)
+    plt.close('all')
 
     # Create timestamp data for the dashboard
     with open(asset_p / ol['report_timestamp'], 'w') as f:
