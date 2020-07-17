@@ -372,7 +372,7 @@ def get_run_name(path_str):
 
 
 def generate_dashboard(prep_p, report_p, clobber=True, 
-                       n_cpu=multiprocessing.cpu_count()-2):
+                       n_cpu=multiprocessing.cpu_count()-2, space=None):
     if n_cpu < 1:
         n_cpu = 1
     elif n_cpu > multiprocessing.cpu_count():
@@ -380,17 +380,22 @@ def generate_dashboard(prep_p, report_p, clobber=True,
         warnings.warn(
             f'You requested {n_cpu} cores but this sytem only has {multiprocessing.cpu_count()}. CPU_count is set to 1!')
         n_cpu = 1
-        
+    
+    if space is None:
+        space = 'MNI152NLin2009cAsym'
+        warnings.warn(
+            f'You did not define a stereotaxic space. I will default to {space}')
+    
     try:
         report_p.mkdir(exist_ok=clobber)
     except FileExistsError as e:
         raise Exception(f'The report directory already exists. Set clobber=True if you want to overwrite.') from e
 
     templates = {
-        'mask': '*_desc-brain_mask.nii.gz',
-        'preproc': '*_desc-preproc_bold.nii.gz',
-        'boldref': '*_boldref.nii.gz',
-        'confound': '*_desc-confounds_regressors.tsv'
+        'mask': '*space-{}_desc-brain_mask.nii.gz',
+        'preproc': '*space-{}_desc-preproc_bold.nii.gz',
+        'boldref': '*space-{}_boldref.nii.gz',
+        'confound': '*_desc-confounds_regressors.tsv' # not space specified
         }
 
     populate_report(report_p, clobber=clobber)
@@ -423,13 +428,15 @@ def generate_dashboard(prep_p, report_p, clobber=True,
                     }
 
                     try:
-                        sub_data['mask'] = list(sub_data['anat_d'].glob(
-                            f'{root_query.name}_space{templates["mask"]}'))[0]
-                        sub_data['t1'] = list(sub_data['anat_d'].glob(
-                            f'{root_query.name}_space*_desc-preproc_T1w.nii.gz'))[0]
+                        search_mask = f'{root_query.name}{templates["mask"]}'.format(space)
+                        search_t1 = f'{root_query.name}_space-{space}_desc-preproc_T1w.nii.gz'
+                        sub_data['mask'] = list(
+                            sub_data['anat_d'].glob(search_mask))[0]
+                        sub_data['t1'] = list(
+                            sub_data['anat_d'].glob(search_t1))[0]
                     except IndexError:
                         warnings.warn(
-                        f'{root_query.name}_{ses_q.name} is missing some anatomical data @ {sub_data["anat_d"]}')
+                            f'{root_query.name}_{ses_q.name} is missing some anatomical data @ {sub_data["anat_d"]}: {search_mask}, {search_t1}')
                         continue
                     # Look for runs inside this subject
                     run_names = list(set([get_run_name(str(p.name))
@@ -445,7 +452,7 @@ def generate_dashboard(prep_p, report_p, clobber=True,
                         try:
                             for fname, fglob in templates.items():
                                 run_search = list(
-                                    sub_data['func_d'].glob(f'{run_name}{fglob}'))
+                                    sub_data['func_d'].glob(f'{run_name}{fglob}'.format(space)))
                                 if len(run_search) == 1:
                                     run_data[fname] = run_search[0]
                                 else:
@@ -639,8 +646,14 @@ if __name__ == "__main__":
                         help="If set to 'True', existing outputs will be overwritten. Default is 'False'.")
     parser.add_argument("-n", "--ncpu", type=int, default=2,
                         help="Define the number of CPUs to be used.")
+    parser.add_argument("-s", "--space", type=str, default='MNI152NLin2009cAsym',
+                        choices=['MNI152NLin2009cAsym',
+                                 'MNI152NLin6Sym',
+                                 'MNI152NLin6ASym'],
+                        help="Please select the stereotaxic space you want to base the QC on.")
     args = parser.parse_args()
     generate_dashboard(pal.Path(args.preproc_dir),
                         pal.Path(args.output_path),
                         args.clobber,
-                        args.ncpu)
+                        args.ncpu,
+                        args.space)
