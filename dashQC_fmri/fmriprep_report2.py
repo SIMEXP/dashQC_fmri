@@ -22,7 +22,7 @@ import subprocess as sb
 from distutils import dir_util
 from nilearn import image as ni
 from matplotlib import gridspec
-from dashQC_fmri.movie_maker import make_gif
+from dashQC_fmri.nii2gif import create_gif
 from sklearn import metrics as skm
 from nilearn import plotting as nlp
 from joblib import Parallel, delayed
@@ -352,10 +352,10 @@ def process_subject(sub_d, asset_p, sub_name, clobber=True):
             fig_func_ref.savefig(asset_p /
                                  ol['fig_run_ref_raw'].format(run_name), dpi=100)
             # Make GIFs for the movies
-            make_gif(run_d['preproc'], str(asset_p /
-                     ol['fig_run_mot_raw'].format(run_name)))
-            make_gif(run_d['preproc'], str(asset_p /
-                     ol['fig_run_mot_prep'].format(run_name)))
+            create_gif(run_d['preproc'], str(asset_p /
+                     ol['fig_run_mot_raw'].format(run_name)), fps=10)
+            create_gif(run_d['preproc'], str(asset_p /
+                     ol['fig_run_mot_prep'].format(run_name)), fps=10)
     plt.close('all')
 
 
@@ -482,7 +482,8 @@ def generate_dashboard(prep_p, report_p, clobber=True,
     # We catch them and ignore them.
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        reports = {sub_name: report_subject(subjects[sub_name], temp) for sub_name in tqdm.tqdm(subject_list)}
+        reports = {sub_name: report_subject(
+            subjects[sub_name], temp) for sub_name in tqdm.tqdm(subject_list)}
     print(f'DONE with JSON reports in {time.time() - json_start:.2f} s.')
 
     # Generate group level data
@@ -572,8 +573,9 @@ def generate_dashboard(prep_p, report_p, clobber=True,
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         with Parallel(n_jobs=n_cpu) as parallel:
-            results = parallel(delayed(process_subject)(subjects[sub_name], asset_p, sub_name, clobber=clobber)
-                            for sub_name in tqdm.tqdm(subject_list))
+           results = parallel(delayed(process_subject)(subjects[sub_name], 
+                                                       asset_p, sub_name, 
+                                                       clobber=clobber))
     print(f'Subject processing DONE after {time.time() - parallel_start:.2f} s.')
 
     # Copy pregenerated strings to the repository
