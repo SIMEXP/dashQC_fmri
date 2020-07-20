@@ -372,7 +372,12 @@ def get_run_name(path_str):
 
 
 def generate_dashboard(prep_p, report_p, clobber=True, 
-                       n_cpu=multiprocessing.cpu_count()-2, space=None):
+                       n_cpu=multiprocessing.cpu_count()-2, space=None, debug=False):
+    if debug:
+        max_sub = 2
+    else:
+        max_sub = None
+
     if n_cpu < 1:
         n_cpu = 1
     elif n_cpu > multiprocessing.cpu_count():
@@ -472,7 +477,10 @@ def generate_dashboard(prep_p, report_p, clobber=True,
     #TODO: make sure there are any subjects found here and error out if not!
 
     subject_list = list(subjects.keys())
-    run_list = list(runs.keys())
+    
+    if debug:
+        subject_list = subject_list[:max_sub]
+    run_list = [run_name for run_name, run in runs.items() if run['sub_name'] in subject_list]
     print(f'I found {len(subject_list)} subjects/sessions and {len(run_list)} runs in {time.time() - sub_start:.2f} s.')
     # Make the json reports
     json_start = time.time()
@@ -658,9 +666,11 @@ if __name__ == "__main__":
                                  'MNI152NLin6Sym',
                                  'MNI152NLin6ASym'],
                         help="Please select the stereotaxic space you want to base the QC on.")
+    parser.add_argument('--debug', action='store_true')
     args = parser.parse_args()
     generate_dashboard(pal.Path(args.preproc_dir),
                         pal.Path(args.output_path),
                         args.clobber,
                         args.ncpu,
-                        args.space)
+                        args.space,
+                        args.debug)
