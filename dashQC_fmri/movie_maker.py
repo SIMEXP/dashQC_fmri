@@ -35,7 +35,7 @@ def make_gif(in_path, out_path):
     ax = f_target.add_axes([0, 0, 1, 1])
     
     anim = FuncAnimation(f_target, animate, init_func=init,
-                         frames=frames, interval=200, blit=True)
+                         frames=frames, interval=200, blit=True, cache_frame_data=False)
     anim.save(out_path, writer='imagemagick', fps=10)
 
 
