@@ -397,10 +397,11 @@ def generate_dashboard(prep_p, report_p, clobber=True,
         'boldref': '*space-{}_boldref.nii.gz',
         'confound': '*_desc-confounds_regressors.tsv' # not space specified
         }
-
+    all_start = time.time()
     populate_report(report_p, clobber=clobber)
-    
+    print(f'Generated folder structure @ {report_p} in {time.time()-all_start:.2f} s.')
     # In this version, a subject can also be a session when multi-session data is used.
+    sub_start = time.time()
     subjects = {}
     runs = {}
     for root_query in prep_p.glob('sub-*'):
@@ -472,8 +473,9 @@ def generate_dashboard(prep_p, report_p, clobber=True,
 
     subject_list = list(subjects.keys())
     run_list = list(runs.keys())
-
+    print(f'I found {len(subject_list)} subjects/sessions and {len(run_list)} runs in {time.time() - sub_start:.2f} s.')
     # Make the json reports
+    json_start = time.time()
     print('START JSON reports')
     temp = get_template()
     # Empty scrubbing masks can raise warnings here and clutter STDOUT
@@ -481,9 +483,10 @@ def generate_dashboard(prep_p, report_p, clobber=True,
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         reports = {sub_name: report_subject(subjects[sub_name], temp) for sub_name in tqdm.tqdm(subject_list)}
-    print('DONE JSON reports')
+    print(f'DONE with JSON reports in {time.time() - json_start:.2f} s.')
 
     # Generate group level data
+    grp_img_start = time.time()
     print('START Group level images')
     t1_group_average = average_image(
         [subjects[sub]['t1'] for sub in subjects.keys()])
@@ -495,9 +498,10 @@ def generate_dashboard(prep_p, report_p, clobber=True,
     func_group_mask = nib.Nifti1Image((func_group_mask_average.get_fdata() > 0.95).astype(int),
                                       affine=func_group_mask_average.affine,
                                       header=func_group_mask_average.header)
-    print('DONE Group level images')
+    print(f'DONE with Group level images in {time.time() - grp_img_start:.2f} s.')
 
     # Generate group level figures
+    grp_mnt_start = time.time()
     print('START Group level montages')
     fig_t1_group_average = make_reg_montage(t1_group_average,
                                             overlay=temp['outline'],
@@ -508,7 +512,7 @@ def generate_dashboard(prep_p, report_p, clobber=True,
     fig_template_outline = make_reg_montage(temp['T1'], overlay=temp['outline'],
                                             cmap=plt.cm.Greys_r)
     fig_template = make_reg_montage(temp['T1'], cmap=plt.cm.Greys_r)
-    print('DONE Group level montages')
+    print(f'DONE with Group level montages in {time.time() - grp_mnt_start:.2f} s.')
 
     # Generate js data
     subject_list_str = make_dict_str('listSubject', subject_list)
@@ -562,14 +566,15 @@ def generate_dashboard(prep_p, report_p, clobber=True,
 
     # Generate subject level outputs
     print(f'START PARALLEL processing data to repository @ {report_p}')
+    parallel_start = time.time()
     asset_p = report_p / 'assets'
     # Opening a lot of pyplot figures raises a memory warning. We ignore that. 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         with Parallel(n_jobs=n_cpu) as parallel:
             results = parallel(delayed(process_subject)(subjects[sub_name], asset_p, sub_name, clobber=clobber)
-                            for sub_name in subject_list)
-    print('Subject processing DONE')
+                            for sub_name in tqdm.tqdm(subject_list))
+    print(f'Subject processing DONE after {time.time() - parallel_start:.2f} s.')
 
     # Copy pregenerated strings to the repository
     ol = get_report_lookup()
@@ -632,7 +637,7 @@ def generate_dashboard(prep_p, report_p, clobber=True,
         data_id = {'data': time.strftime("%Y-%m-%d-%H:%M:%S"),
                    'timestamp': time.time() }
         f.write(f'var datasetID = {json.dumps(data_id)};')
-    print(f'DONE moving data to repository @ {report_p}')
+    print(f'DONE moving data to repository @ {report_p}.\nTotal completion time: {time.time() - all_start:.2f} s.   ')
 
 
 if __name__ == "__main__":
