@@ -101,9 +101,9 @@ def create_mosaic(in_img, origShape, slices=None, slicesOrder='csa'):
     new_img: numpy array
 
     """
-    maxAxis = np.max(origShape[0:3])
 
     if len(origShape) > 3:
+        maxAxis = origShape[3]
         if slices is None:
             slices = [int(origShape[0]/2),
                       int(origShape[1]/2),
@@ -126,6 +126,7 @@ def create_mosaic(in_img, origShape, slices=None, slicesOrder='csa'):
                     np.flip(in_img[:, slices[1], :, maxAxis - i - 1], 1).T))
                     for i in range(maxAxis)])
     else:
+        maxAxis = np.max(origShape[0:3])
         new_img = np.array(
             [np.hstack((
                 np.hstack((
