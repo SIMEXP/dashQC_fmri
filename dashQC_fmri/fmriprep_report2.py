@@ -353,9 +353,9 @@ def process_subject(sub_d, asset_p, sub_name, clobber=True):
                                  ol['fig_run_ref_raw'].format(run_name), dpi=100)
             # Make GIFs for the movies
             create_gif(run_d['preproc'], str(asset_p /
-                     ol['fig_run_mot_raw'].format(run_name)), fps=10)
+                     ol['fig_run_mot_raw'].format(run_name)), fps=10, mode='pseudocolor')
             create_gif(run_d['preproc'], str(asset_p /
-                     ol['fig_run_mot_prep'].format(run_name)), fps=10)
+                                             ol['fig_run_mot_prep'].format(run_name)), fps=10, mode='pseudocolor')
     plt.close('all')
 
 
@@ -381,7 +381,7 @@ def generate_dashboard(prep_p, report_p, clobber=True,
     if n_cpu < 1:
         n_cpu = 1
     elif n_cpu > multiprocessing.cpu_count():
-        
+
         warnings.warn(
             f'You requested {n_cpu} cores but this sytem only has {multiprocessing.cpu_count()}. CPU_count is set to 1!')
         n_cpu = 1
@@ -580,10 +580,11 @@ def generate_dashboard(prep_p, report_p, clobber=True,
     # Opening a lot of pyplot figures raises a memory warning. We ignore that. 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
+        if debug:
+            n_cpu=1
         with Parallel(n_jobs=n_cpu) as parallel:
-           results = parallel(delayed(process_subject)(subjects[sub_name], 
-                                                       asset_p, sub_name, 
-                                                       clobber=clobber))
+            results = parallel(delayed(process_subject)(subjects[sub_name], asset_p, sub_name, clobber=clobber)
+                               for sub_name in tqdm.tqdm(subject_list))
     print(f'Subject processing DONE after {time.time() - parallel_start:.2f} s.')
 
     # Copy pregenerated strings to the repository
