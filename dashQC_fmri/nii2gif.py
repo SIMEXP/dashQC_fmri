@@ -162,7 +162,10 @@ def write_gif(in_file, out_filename, mode, fps, colormap, slices, slicesOrder):
     # Load NIfTI and put it in right shape
     out_img, origShape = load_and_prepare_image(in_file)
 
-    maxAxis = np.max(origShape[0:3])
+    if len(origShape) == 4:
+        maxAxis = origShape[3]
+    else:
+        maxAxis = np.max(origShape[0:3])
 
     # Create output mosaic
     new_img = create_mosaic(out_img, origShape, slices=slices,
