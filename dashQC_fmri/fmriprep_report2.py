@@ -110,7 +110,7 @@ def reference_image(data_in, t_min=1, t_max=99.9):
 
 
 def make_reg_montage(data_in, overlay=None, cmap=nlp.cm.black_red):
-    data_img, vmin, vmax = reference_image(data_in, t_min=1, t_max=100)
+    data_img, vmin, vmax = reference_image(data_in, t_min=1, t_max=99.9)
 
     # Anat plot with contours
     f_montage = plt.figure(figsize=(6, 6))
